@@ -1,6 +1,7 @@
 import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
 import { writeFile, readFile, mkdir, access } from 'fs/promises';
+import fs from 'fs';
 import { join, dirname, resolve } from 'path';
 import { tmpdir } from 'os';
 import {
@@ -24,20 +25,25 @@ const execAsync = promisify(exec);
  * 负责与coderocket-cli集成，提供代码审查和AI服务管理功能
  */
 export class CodeRocketService {
-  private coderocketCliPath: string;
+  private coderocketCliPath: string = '';
 
   constructor() {
-    // 尝试找到coderocket-cli的路径
-    this.coderocketCliPath = this.findCoderocketCliPath();
-    logger.info('CodeRocket服务初始化', {
-      coderocketCliPath: this.coderocketCliPath
-    });
+    // 初始化将在第一次使用时进行
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (!this.coderocketCliPath) {
+      this.coderocketCliPath = await this.findCoderocketCliPath();
+      logger.info('CodeRocket服务初始化', {
+        coderocketCliPath: this.coderocketCliPath
+      });
+    }
   }
 
   /**
    * 查找coderocket-cli的安装路径
    */
-  private findCoderocketCliPath(): string {
+  private async findCoderocketCliPath(): Promise<string> {
     // 优先级：
     // 1. 相对路径（开发环境）
     // 2. 全局安装路径
@@ -214,6 +220,7 @@ export class CodeRocketService {
    * 审查代码片段
    */
   async reviewCode(request: ReviewCodeRequest): Promise<ReviewResult> {
+    await this.ensureInitialized();
     logger.info('开始代码审查', {
       language: request.language,
       codeLength: request.code.length,
@@ -290,6 +297,7 @@ ${request.code}
    * 审查Git提交
    */
   async reviewCommit(request: ReviewCommitRequest): Promise<ReviewResult> {
+    await this.ensureInitialized();
     try {
       const repoPath = request.repository_path || process.cwd();
       const promptFile = await this.createTempPromptFile(request.custom_prompt);
@@ -320,6 +328,7 @@ ${request.commit_hash ? `提交哈希: ${request.commit_hash}` : ''}
    * 审查文件列表
    */
   async reviewFiles(request: ReviewFilesRequest): Promise<ReviewResult> {
+    await this.ensureInitialized();
     try {
       const repoPath = request.repository_path || process.cwd();
       const promptFile = await this.createTempPromptFile(request.custom_prompt);
@@ -364,6 +373,7 @@ ${fileContents.join('\n\n')}
    * 配置AI服务
    */
   async configureAIService(request: ConfigureAIServiceRequest): Promise<SuccessResponse> {
+    await this.ensureInitialized();
     try {
       // 设置AI服务
       await this.callAIServiceManager('set', request.service, request.scope);
@@ -464,6 +474,7 @@ ${fileContents.join('\n\n')}
    * 获取AI服务状态
    */
   async getAIServiceStatus(): Promise<ServiceStatusResponse> {
+    await this.ensureInitialized();
     try {
       // 获取当前AI服务
       const currentService = await this.callAIServiceManager('status');
