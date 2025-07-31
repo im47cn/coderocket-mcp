@@ -52,10 +52,10 @@ echo "3) major (重大版本): $CURRENT_VERSION -> 重大版本"
 echo "4) 自定义版本"
 echo ""
 
-read -p "请选择 (1-4): " -n 1 -r
+read -p "请选择 (1-4): " CHOICE
 echo ""
 
-case $REPLY in
+case $CHOICE in
     1)
         VERSION_TYPE="patch"
         ;;
@@ -73,8 +73,12 @@ case $REPLY in
         fi
         VERSION_TYPE=$CUSTOM_VERSION
         ;;
+    "")
+        echo -e "${RED}❌ 错误：请选择一个选项${NC}"
+        exit 1
+        ;;
     *)
-        echo -e "${RED}❌ 错误：无效选择${NC}"
+        echo -e "${RED}❌ 错误：无效选择 '$CHOICE'${NC}"
         exit 1
         ;;
 esac
