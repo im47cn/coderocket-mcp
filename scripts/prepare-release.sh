@@ -46,9 +46,9 @@ echo -e "${BLUE}📋 当前版本: $CURRENT_VERSION${NC}"
 # 询问新版本
 echo ""
 echo "选择版本类型："
-echo "1) patch (修复版本): $CURRENT_VERSION -> $(npm version patch --dry-run | cut -d'v' -f2)"
-echo "2) minor (功能版本): $CURRENT_VERSION -> $(npm version minor --dry-run | cut -d'v' -f2)"
-echo "3) major (重大版本): $CURRENT_VERSION -> $(npm version major --dry-run | cut -d'v' -f2)"
+echo "1) patch (修复版本): $CURRENT_VERSION -> 修复版本"
+echo "2) minor (功能版本): $CURRENT_VERSION -> 功能版本"
+echo "3) major (重大版本): $CURRENT_VERSION -> 重大版本"
 echo "4) 自定义版本"
 echo ""
 
