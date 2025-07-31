@@ -95,7 +95,19 @@ export class Logger {
     // 写入日志文件
     if (this.logFile) {
       try {
-        const logLine = JSON.stringify(entry) + '\n';
+        // 处理 Error 对象，避免循环结构
+        let logEntry = entry;
+        if (entry.error instanceof Error) {
+          logEntry = {
+            ...entry,
+            error: {
+              name: entry.error.name,
+              message: entry.error.message,
+              stack: entry.error.stack,
+            }
+          };
+        }
+        const logLine = JSON.stringify(logEntry) + '\n';
         await appendFile(this.logFile, logLine, 'utf-8');
       } catch (fileError) {
         console.error('Failed to write to log file:', fileError);
