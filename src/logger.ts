@@ -84,12 +84,13 @@ export class Logger {
       error,
     };
 
-    // 输出到控制台（stderr，避免干扰MCP通信）
+    // 输出到控制台（根据日志级别选择合适的输出流）
     const levelName = LogLevel[level];
     const contextStr = context ? ` ${JSON.stringify(context)}` : '';
     const errorStr = error ? ` Error: ${error.message}` : '';
     
-    console.error(`[${entry.timestamp}] ${levelName}: ${message}${contextStr}${errorStr}`);
+    const logMethod = level >= LogLevel.WARN ? console.error : console.log;
+    logMethod(`[${entry.timestamp}] ${levelName}: ${message}${contextStr}${errorStr}`);
 
     // 写入日志文件
     if (this.logFile) {
