@@ -1,0 +1,109 @@
+#!/usr/bin/env node
+
+/**
+ * CodeRocket MCP 启动脚本
+ */
+
+import { spawn } from 'child_process';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const command = process.argv[2];
+
+switch (command) {
+  case 'start':
+  case undefined:
+    // 启动MCP服务器
+    console.error('🚀 启动 CodeRocket MCP 服务器...');
+    const serverPath = resolve(__dirname, '../dist/index.js');
+    const server = spawn('node', [serverPath], {
+      stdio: 'inherit',
+      env: process.env,
+    });
+    
+    server.on('error', (error) => {
+      console.error('❌ 服务器启动失败:', error.message);
+      process.exit(1);
+    });
+    
+    server.on('exit', (code) => {
+      if (code !== 0) {
+        console.error(`❌ 服务器异常退出，代码: ${code}`);
+        process.exit(code || 1);
+      }
+    });
+    break;
+
+  case 'test':
+    // 运行测试
+    console.error('🧪 运行 CodeRocket MCP 测试...');
+    const testPath = resolve(__dirname, '../dist/test.js');
+    const test = spawn('node', [testPath], {
+      stdio: 'inherit',
+      env: process.env,
+    });
+    
+    test.on('error', (error) => {
+      console.error('❌ 测试运行失败:', error.message);
+      process.exit(1);
+    });
+    
+    test.on('exit', (code) => {
+      process.exit(code || 0);
+    });
+    break;
+
+  case 'help':
+  case '--help':
+  case '-h':
+    console.log(`
+CodeRocket MCP - AI驱动的代码审查服务器
+
+用法:
+  coderocket-mcp [命令]
+
+命令:
+  start, (默认)    启动MCP服务器
+  test             运行功能测试
+  help             显示帮助信息
+
+示例:
+  coderocket-mcp start     # 启动服务器
+  coderocket-mcp test      # 运行测试
+  coderocket-mcp help      # 显示帮助
+
+环境变量:
+  AI_SERVICE              默认AI服务 (gemini/opencode/claudecode)
+  AI_AUTO_SWITCH          启用自动切换 (true/false)
+  AI_TIMEOUT              超时时间（秒）
+  AI_MAX_RETRIES          最大重试次数
+  NODE_ENV                环境模式 (development/production)
+
+更多信息请访问: https://github.com/im47cn/coderocket-cli
+`);
+    break;
+
+  case 'version':
+  case '--version':
+  case '-v':
+    // 读取package.json获取版本信息
+    try {
+      const packagePath = resolve(__dirname, '../package.json');
+      const packageJson = JSON.parse(
+        readFileSync(packagePath, 'utf-8')
+      );
+      console.log(`CodeRocket MCP v${packageJson.version}`);
+    } catch (error) {
+      console.log('CodeRocket MCP v1.0.0');
+    }
+    break;
+
+  default:
+    console.error(`❌ 未知命令: ${command}`);
+    console.error('使用 "coderocket-mcp help" 查看可用命令');
+    process.exit(1);
+}

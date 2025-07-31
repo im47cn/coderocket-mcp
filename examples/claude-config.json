@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "coderocket": {
+      "command": "node",
+      "args": ["/path/to/coderocket-mcp/dist/index.js"],
+      "env": {
+        "AI_SERVICE": "gemini",
+        "AI_AUTO_SWITCH": "true",
+        "AI_TIMEOUT": "60",
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
