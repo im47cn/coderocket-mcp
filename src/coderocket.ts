@@ -506,7 +506,7 @@ ${fileContents.join('\n\n')}
         configured,
         install_command: this.getInstallCommand(service),
         config_command: this.getConfigCommand(service),
-        error_message: !available ? `${service} 服务未安装或不可用` : undefined,
+        error_message: available ? undefined : `${service} 服务未安装或不可用`,
       };
     } catch (error) {
       return {
