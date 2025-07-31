@@ -97,7 +97,7 @@ export CLAUDECODE_API_KEY="your_claudecode_api_key"
 npx -y @yeepay/coderocket-mcp test
 ```
 
-### 4. 在AI工具中配置
+### 3. 在AI工具中配置
 
 #### Claude Desktop配置
 
