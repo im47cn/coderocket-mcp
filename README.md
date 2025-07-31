@@ -363,7 +363,7 @@ npm test
 
 ## 🤝 贡献
 
-我们欢迎社区贡献！请参考 [CodeRocket-CLI贡献指南](../coderocket-cli/CONTRIBUTING.md)。
+我们欢迎社区贡献！请参考 [CodeRocket-CLI贡献指南](https://github.com/im47cn/coderocket-mcp/blob/main/CONTRIBUTING.md)。
 
 ### 快速开始
 
@@ -379,9 +379,9 @@ npm test
 
 ## 🔗 相关链接
 
-- [CodeRocket-CLI](../coderocket-cli) - 核心CLI工具
+- [CodeRocket-CLI](https://github.com/im47cn/coderocket-cli) - 核心CLI工具
 - [Model Context Protocol](https://modelcontextprotocol.io/) - MCP官方文档
-- [问题反馈](https://github.com/im47cn/coderocket-cli/issues) - 报告问题或建议
+- [问题反馈](https://github.com/im47cn/coderocket-mcp/issues) - 报告问题或建议
 
 ## 📊 特性对比
 

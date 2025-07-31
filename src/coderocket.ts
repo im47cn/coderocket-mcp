@@ -3,7 +3,7 @@ import { promisify } from 'util';
 import { writeFile, readFile, mkdir, access } from 'fs/promises';
 import fs from 'fs';
 import { join, dirname, resolve } from 'path';
-import { tmpdir } from 'os';
+import { tmpdir, homedir } from 'os';
 import {
   ReviewCodeRequest,
   ReviewCommitRequest,
@@ -20,14 +20,64 @@ import { logger, errorHandler } from './logger.js';
 const execAsync = promisify(exec);
 
 /**
+ * 安全地转义shell参数
+ */
+function escapeShellArg(arg: string): string {
+  // 使用单引号包围参数，并转义内部的单引号
+  return `'${arg.replace(/'/g, "'\"'\"'")}'`;
+}
+
+/**
+ * 安全地构建shell命令
+ */
+function buildSafeCommand(command: string, args: string[] = []): string {
+  const escapedArgs = args.map(escapeShellArg);
+  return `${command} ${escapedArgs.join(' ')}`;
+}
+
+/**
+ * 配置管理类
+ */
+class ConfigManager {
+  /**
+   * 获取API密钥环境变量名
+   */
+  static getAPIKeyEnvVar(service: AIService): string {
+    const envVarMap: Record<AIService, string> = {
+      gemini: 'GEMINI_API_KEY',
+      opencode: 'OPENCODE_API_KEY',
+      claudecode: 'CLAUDECODE_API_KEY',
+    };
+    return envVarMap[service];
+  }
+
+  /**
+   * 获取配置文件路径
+   */
+  static getConfigPath(scope: string): { dir: string; file: string } {
+    const configDir = scope === 'global'
+      ? join(homedir(), '.coderocket')
+      : process.cwd();
+
+    const configFile = scope === 'global'
+      ? join(configDir, 'env')
+      : join(configDir, '.env');
+
+    return { dir: configDir, file: configFile };
+  }
+}
+
+/**
  * CodeRocket服务类
  *
  * 负责与coderocket-cli集成，提供代码审查和AI服务管理功能
  */
 export class CodeRocketService {
   private coderocketCliPath: string = '';
+  private readonly commandTimeout: number;
 
-  constructor() {
+  constructor(commandTimeout: number = 300000) { // 默认5分钟超时
+    this.commandTimeout = commandTimeout;
     // 初始化将在第一次使用时进行
   }
 
@@ -51,8 +101,8 @@ export class CodeRocketService {
     const possiblePaths = [
       resolve(process.cwd(), '../coderocket-cli'),
       resolve(process.cwd(), '../../coderocket-cli'),
-      resolve(process.env.HOME || '~', '.coderocket'),
-      resolve(process.env.HOME || '~', '.codereview-cli'), // 向后兼容
+      resolve(homedir(), '.coderocket'),
+      resolve(homedir(), '.codereview-cli'), // 向后兼容
       '/usr/local/share/coderocket-cli',
     ];
 
@@ -77,7 +127,7 @@ export class CodeRocketService {
   private async executeShellCommand(
     command: string,
     cwd?: string,
-  ): Promise<{ stdout: string; stderr: string }> {
+  ): Promise<{ stdout: string; stderr: string; code: number }> {
     logger.debug('执行Shell命令', {
       command,
       cwd: cwd || this.coderocketCliPath,
@@ -90,7 +140,8 @@ export class CodeRocketService {
           ...process.env,
           PATH: `${this.coderocketCliPath}/bin:${process.env.PATH}`,
         },
-        timeout: 300000, // 5分钟超时
+        timeout: this.commandTimeout,
+        shell: '/bin/bash', // 明确指定使用bash
       });
 
       logger.debug('Shell命令执行成功', {
@@ -99,9 +150,19 @@ export class CodeRocketService {
         stderrLength: stderr.length,
       });
 
-      return { stdout, stderr };
+      return { stdout, stderr, code: 0 };
     } catch (error: any) {
       logger.error('Shell命令执行失败', error, { command, cwd });
+
+      // 如果是执行错误，返回退出代码
+      if (error.code !== undefined) {
+        return {
+          stdout: error.stdout || '',
+          stderr: error.stderr || error.message,
+          code: error.code,
+        };
+      }
+
       throw errorHandler.handleError(error, 'executeShellCommand');
     }
   }
@@ -118,12 +179,12 @@ export class CodeRocketService {
       'lib',
       'ai-service-manager.sh',
     );
-    const command = `bash "${scriptPath}" ${action} ${args.join(' ')}`;
+    const command = buildSafeCommand('bash', [scriptPath, action, ...args]);
 
-    const { stdout, stderr } = await this.executeShellCommand(command);
+    const { stdout, stderr, code } = await this.executeShellCommand(command);
 
-    if (stderr && !stdout) {
-      throw new Error(stderr);
+    if (code !== 0) {
+      throw new Error(`AI服务管理器执行失败 (退出代码: ${code}): ${stderr || stdout}`);
     }
 
     return stdout.trim();
@@ -190,6 +251,34 @@ export class CodeRocketService {
 提供具体的问题分析和改进建议。
 
 请开始审查。`;
+  }
+
+  /**
+   * 执行AI审查命令的通用方法
+   */
+  private async executeAIReview(
+    aiService: AIService,
+    promptFile: string,
+    reviewPrompt: string,
+    workingDir?: string,
+  ): Promise<ReviewResult> {
+    const scriptPath = join(
+      this.coderocketCliPath,
+      'lib',
+      'ai-service-manager.sh',
+    );
+
+    const command = workingDir
+      ? `cd ${escapeShellArg(workingDir)} && source ${escapeShellArg(scriptPath)} && intelligent_ai_review ${escapeShellArg(aiService)} ${escapeShellArg(promptFile)} ${escapeShellArg(reviewPrompt)}`
+      : `source ${escapeShellArg(scriptPath)} && intelligent_ai_review ${escapeShellArg(aiService)} ${escapeShellArg(promptFile)} ${escapeShellArg(reviewPrompt)}`;
+
+    const { stdout, code } = await this.executeShellCommand(command, workingDir);
+
+    if (code !== 0) {
+      throw new Error(`AI审查执行失败 (退出代码: ${code})`);
+    }
+
+    return this.parseReviewResult(stdout, aiService);
   }
 
   /**
@@ -277,17 +366,8 @@ ${request.code}
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || 'gemini';
-      const scriptPath = join(
-        this.coderocketCliPath,
-        'lib',
-        'ai-service-manager.sh',
-      );
+      const result = await this.executeAIReview(aiService, promptFile, reviewPrompt);
 
-      // 使用intelligent_ai_review函数
-      const command = `source "${scriptPath}" && intelligent_ai_review "${aiService}" "${promptFile}" "${reviewPrompt}"`;
-      const { stdout } = await this.executeShellCommand(command);
-
-      const result = this.parseReviewResult(stdout, aiService);
       logger.info('代码审查完成', {
         status: result.status,
         aiService: result.ai_service_used,
@@ -350,16 +430,7 @@ ${request.commit_hash ? `提交哈希: ${request.commit_hash}` : ''}
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || 'gemini';
-      const scriptPath = join(
-        this.coderocketCliPath,
-        'lib',
-        'ai-service-manager.sh',
-      );
-
-      const command = `cd "${repoPath}" && source "${scriptPath}" && intelligent_ai_review "${aiService}" "${promptFile}" "${reviewPrompt}"`;
-      const { stdout } = await this.executeShellCommand(command, repoPath);
-
-      return this.parseReviewResult(stdout, aiService);
+      return await this.executeAIReview(aiService, promptFile, reviewPrompt, repoPath);
     } catch (error) {
       throw new Error(
         `Git提交审查失败: ${error instanceof Error ? error.message : String(error)}`,
@@ -401,16 +472,7 @@ ${fileContents.join('\n\n')}
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || 'gemini';
-      const scriptPath = join(
-        this.coderocketCliPath,
-        'lib',
-        'ai-service-manager.sh',
-      );
-
-      const command = `source "${scriptPath}" && intelligent_ai_review "${aiService}" "${promptFile}" "${reviewPrompt}"`;
-      const { stdout } = await this.executeShellCommand(command, repoPath);
-
-      return this.parseReviewResult(stdout, aiService);
+      return await this.executeAIReview(aiService, promptFile, reviewPrompt, repoPath);
     } catch (error) {
       throw new Error(
         `文件审查失败: ${error instanceof Error ? error.message : String(error)}`,
@@ -431,7 +493,7 @@ ${fileContents.join('\n\n')}
 
       // 如果提供了API密钥，设置环境变量
       if (request.api_key) {
-        const envVarName = this.getAPIKeyEnvVar(request.service);
+        const envVarName = ConfigManager.getAPIKeyEnvVar(request.service);
         process.env[envVarName] = request.api_key;
 
         // 保存到配置文件
@@ -471,38 +533,32 @@ ${fileContents.join('\n\n')}
     }
   }
 
-  /**
-   * 获取API密钥环境变量名
-   */
-  private getAPIKeyEnvVar(service: AIService): string {
-    const envVars: Record<AIService, string> = {
-      gemini: 'GEMINI_API_KEY',
-      opencode: 'OPENCODE_API_KEY',
-      claudecode: 'CLAUDECODE_API_KEY',
-    };
-    return envVars[service];
-  }
+
 
   /**
    * 保存API密钥到配置文件
+   *
+   * ⚠️ 安全警告：API密钥将以明文形式存储在配置文件中。
+   * 请确保配置文件的访问权限受到适当限制。
+   * 建议使用环境变量或更安全的密钥管理方案。
    */
   private async saveAPIKeyToConfig(
     service: AIService,
     apiKey: string,
     scope: string,
   ): Promise<void> {
-    const configDir =
-      scope === 'global'
-        ? join(process.env.HOME || '~', '.coderocket')
-        : process.cwd();
-
-    const configFile =
-      scope === 'global' ? join(configDir, 'env') : join(configDir, '.env');
+    const { dir: configDir, file: configFile } = ConfigManager.getConfigPath(scope);
 
     // 确保配置目录存在
     await mkdir(dirname(configFile), { recursive: true });
 
-    const envVarName = this.getAPIKeyEnvVar(service);
+    // 记录安全警告
+    logger.warn('API密钥将以明文形式存储，请确保文件访问权限安全', {
+      configFile,
+      service,
+    });
+
+    const envVarName = ConfigManager.getAPIKeyEnvVar(service);
     const configLine = `${envVarName}=${apiKey}\n`;
 
     try {
@@ -602,13 +658,13 @@ ${fileContents.join('\n\n')}
   private async isServiceAvailable(service: AIService): Promise<boolean> {
     try {
       const commands: Record<AIService, string> = {
-        gemini: 'gemini --version',
-        opencode: 'opencode --version',
-        claudecode: 'claudecode --version',
+        gemini: buildSafeCommand('gemini', ['--version']),
+        opencode: buildSafeCommand('opencode', ['--version']),
+        claudecode: buildSafeCommand('claudecode', ['--version']),
       };
 
-      await this.executeShellCommand(commands[service]);
-      return true;
+      const { code } = await this.executeShellCommand(commands[service]);
+      return code === 0;
     } catch {
       return false;
     }
@@ -618,7 +674,7 @@ ${fileContents.join('\n\n')}
    * 检查服务是否已配置
    */
   private async isServiceConfigured(service: AIService): Promise<boolean> {
-    const envVarName = this.getAPIKeyEnvVar(service);
+    const envVarName = ConfigManager.getAPIKeyEnvVar(service);
     return !!process.env[envVarName];
   }
 
