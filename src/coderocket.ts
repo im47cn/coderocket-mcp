@@ -54,7 +54,7 @@ export class CodeRocketService {
       try {
         // 检查关键文件是否存在
         const libPath = join(path, 'lib', 'ai-service-manager.sh');
-        require('fs').accessSync(libPath, require('fs').constants.F_OK);
+        await access(libPath, fs.constants.F_OK);
         return path;
       } catch {
         continue;
