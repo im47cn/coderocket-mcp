@@ -4,7 +4,7 @@
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 
-一个基于 Model Context Protocol (MCP) 的智能代码审查服务器，集成了 CodeRocket-CLI 的强大功能，为AI编程工具提供专业的代码审查能力。
+一个基于 Model Context Protocol (MCP) 的智能代码审查 MCP，集成了 CodeRocket-CLI 的强大功能，为AI编程工具提供专业的代码审查能力。
 
 ## 🚀 核心功能
 
@@ -27,26 +27,49 @@
 
 ## 🛠 安装
 
-### 前置要求
+### 正式安装（推荐）
+
+#### 前置要求
 
 1. **Node.js**: >= 18.0.0
-2. **CodeRocket-CLI**: 需要先安装 [CodeRocket-CLI](../coderocket-cli)
+2. **CodeRocket-CLI**: 需要先安装 [CodeRocket-CLI](https://github.com/im47cn/coderocket-cli)
 3. **AI服务**: 至少配置一个AI服务（Gemini、OpenCode或ClaudeCode）
 
-### 安装步骤
+#### 安装过程
+
+从npm注册表安装：
+
+```bash
+# 1. 全局安装CodeRocket MCP
+npm install -g @yeepay/coderocket-mcp
+
+# 2. 验证安装
+npx -y @yeepay/coderocket-mcp --version
+
+# 3. 运行测试
+npx -y @yeepay/coderocket-mcp test
+
+# 4. 启动服务器
+npx -y @yeepay/coderocket-mcp start
+```
+
+> **注意**: CodeRocket MCP依赖于CodeRocket-CLI，请确保先安装CodeRocket-CLI。
+
+### 开发者安装
+
+如果您想从源码安装或参与开发：
 
 ```bash
 # 1. 克隆项目
 git clone https://github.com/im47cn/coderocket-mcp.git
 cd coderocket-mcp
 
-# 2. 安装依赖
+# 2. 运行安装脚本
+./install.sh
+
+# 3. 或手动安装
 npm install
-
-# 3. 构建项目
 npm run build
-
-# 4. 测试安装
 npm start
 ```
 
@@ -54,40 +77,62 @@ npm start
 
 ### 1. 配置AI服务
 
-首先确保至少配置了一个AI服务：
+配置至少一个AI服务的API密钥：
 
 ```bash
 # 配置Gemini（推荐）
-npm install -g @google/gemini-cli
-gemini config
+export GEMINI_API_KEY="your_gemini_api_key"
 
 # 或配置OpenCode
-npm install -g @opencode/cli
-opencode config
+export OPENCODE_API_KEY="your_opencode_api_key"
 
 # 或配置ClaudeCode
-npm install -g @anthropic-ai/claude-code
-claudecode config
+export CLAUDECODE_API_KEY="your_claudecode_api_key"
 ```
 
-### 2. 启动MCP服务器
+### 2. 测试安装
 
 ```bash
-npm start
+# 运行功能测试
+npx -y @yeepay/coderocket-mcp test
 ```
 
-### 3. 在AI工具中使用
+### 4. 在AI工具中配置
 
-将以下配置添加到您的AI工具的MCP配置中：
+#### Claude Desktop配置
+
+编辑 `~/Library/Application Support/Claude/claude_desktop_config.json`：
 
 ```json
 {
   "mcpServers": {
     "coderocket": {
-      "command": "node",
-      "args": ["/path/to/coderocket-mcp/dist/index.js"]
+      "command": "npx",
+      "args": ["-y", "@yeepay/coderocket-mcp", "start"],
+      "env": {
+        "GEMINI_API_KEY": "your_gemini_api_key"
+      }
     }
   }
+}
+```
+
+#### 其他AI工具
+
+对于其他支持MCP的AI工具，使用类似配置：
+
+```json
+{
+  "mcp_servers": [
+    {
+      "name": "coderocket",
+      "command": ["coderocket-mcp", "start"],
+      "environment": {
+        "AI_SERVICE": "gemini",
+        "GEMINI_API_KEY": "your_api_key"
+      }
+    }
+  ]
 }
 ```
 
