@@ -16,7 +16,7 @@ import {
 
 /**
  * CodeRocket MCP Server
- * 
+ *
  * 提供AI驱动的代码审查功能，集成多种AI服务（Gemini、OpenCode、ClaudeCode）
  * 支持代码片段审查、Git提交审查、文件审查和AI服务管理
  */
@@ -34,7 +34,7 @@ class CodeRocketMCPServer {
         capabilities: {
           tools: {},
         },
-      }
+      },
     );
 
     this.codeRocketService = new CodeRocketService();
@@ -80,7 +80,7 @@ class CodeRocketMCPServer {
     });
 
     // 注册工具调用处理器
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async request => {
       const { name, arguments: args } = request.params;
 
       try {
@@ -100,7 +100,8 @@ class CodeRocketMCPServer {
 
           case 'review_commit': {
             const parsedArgs = ReviewCommitRequestSchema.parse(args);
-            const result = await this.codeRocketService.reviewCommit(parsedArgs);
+            const result =
+              await this.codeRocketService.reviewCommit(parsedArgs);
             return {
               content: [
                 {
@@ -126,7 +127,8 @@ class CodeRocketMCPServer {
 
           case 'configure_ai_service': {
             const parsedArgs = ConfigureAIServiceRequestSchema.parse(args);
-            const result = await this.codeRocketService.configureAIService(parsedArgs);
+            const result =
+              await this.codeRocketService.configureAIService(parsedArgs);
             return {
               content: [
                 {
@@ -153,20 +155,25 @@ class CodeRocketMCPServer {
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify({
-                error: errorMessage,
-                error_code: 'TOOL_EXECUTION_ERROR',
-                suggestions: [
-                  '检查输入参数是否正确',
-                  '确保coderocket-cli已正确安装',
-                  '验证AI服务配置是否正确',
-                ],
-              }, null, 2),
+              text: JSON.stringify(
+                {
+                  error: errorMessage,
+                  error_code: 'TOOL_EXECUTION_ERROR',
+                  suggestions: [
+                    '检查输入参数是否正确',
+                    '确保coderocket-cli已正确安装',
+                    '验证AI服务配置是否正确',
+                  ],
+                },
+                null,
+                2,
+              ),
             },
           ],
           isError: true,
@@ -184,7 +191,7 @@ class CodeRocketMCPServer {
 
 // 启动服务器
 const server = new CodeRocketMCPServer();
-server.run().catch((error) => {
+server.run().catch(error => {
   console.error('Failed to start server:', error);
   process.exit(1);
 });

@@ -33,7 +33,7 @@ export class Logger {
   constructor(level: LogLevel = LogLevel.INFO, logFile?: string) {
     this.logLevel = level;
     this.logFile = logFile;
-    
+
     // 如果没有指定日志文件，使用临时目录
     if (!this.logFile) {
       this.logFile = join(tmpdir(), 'coderocket-mcp.log');
@@ -71,7 +71,12 @@ export class Logger {
   /**
    * 核心日志记录方法
    */
-  private async log(level: LogLevel, message: string, context?: Record<string, any>, error?: Error) {
+  private async log(
+    level: LogLevel,
+    message: string,
+    context?: Record<string, any>,
+    error?: Error,
+  ) {
     if (level < this.logLevel) {
       return;
     }
@@ -88,9 +93,11 @@ export class Logger {
     const levelName = LogLevel[level];
     const contextStr = context ? ` ${JSON.stringify(context)}` : '';
     const errorStr = error ? ` Error: ${error.message}` : '';
-    
+
     const logMethod = level >= LogLevel.WARN ? console.error : console.log;
-    logMethod(`[${entry.timestamp}] ${levelName}: ${message}${contextStr}${errorStr}`);
+    logMethod(
+      `[${entry.timestamp}] ${levelName}: ${message}${contextStr}${errorStr}`,
+    );
 
     // 写入日志文件
     if (this.logFile) {
@@ -104,7 +111,7 @@ export class Logger {
               name: entry.error.name,
               message: entry.error.message,
               stack: entry.error.stack,
-            }
+            },
           };
         }
         const logLine = JSON.stringify(logEntry) + '\n';
@@ -132,7 +139,7 @@ export class Logger {
 
 // 全局日志实例
 export const logger = new Logger(
-  process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.INFO
+  process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.INFO,
 );
 
 /**
@@ -163,7 +170,7 @@ export class ErrorHandler {
     this.logger.error(
       `${context ? `[${context}] ` : ''}${formattedError.message}`,
       formattedError,
-      { context }
+      { context },
     );
 
     return formattedError;
@@ -174,7 +181,7 @@ export class ErrorHandler {
    */
   wrapAsync<T extends any[], R>(
     fn: (...args: T) => Promise<R>,
-    context?: string
+    context?: string,
   ): (...args: T) => Promise<R> {
     return async (...args: T): Promise<R> => {
       try {
@@ -188,7 +195,10 @@ export class ErrorHandler {
   /**
    * 创建用户友好的错误消息
    */
-  createUserFriendlyError(error: Error, suggestions?: string[]): {
+  createUserFriendlyError(
+    error: Error,
+    suggestions?: string[],
+  ): {
     error: string;
     error_code: string;
     suggestions: string[];
@@ -205,7 +215,10 @@ export class ErrorHandler {
         '确保有足够的权限执行命令',
         ...userSuggestions,
       ];
-    } else if (error.message.includes('AI服务') || error.message.includes('AI service')) {
+    } else if (
+      error.message.includes('AI服务') ||
+      error.message.includes('AI service')
+    ) {
       errorCode = 'AI_SERVICE_ERROR';
       userSuggestions = [
         '检查AI服务配置',
@@ -214,7 +227,10 @@ export class ErrorHandler {
         '尝试切换到其他AI服务',
         ...userSuggestions,
       ];
-    } else if (error.message.includes('文件') || error.message.includes('file')) {
+    } else if (
+      error.message.includes('文件') ||
+      error.message.includes('file')
+    ) {
       errorCode = 'FILE_ERROR';
       userSuggestions = [
         '检查文件路径是否正确',

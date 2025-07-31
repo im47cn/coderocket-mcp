@@ -21,7 +21,7 @@ const execAsync = promisify(exec);
 
 /**
  * CodeRocket服务类
- * 
+ *
  * 负责与coderocket-cli集成，提供代码审查和AI服务管理功能
  */
 export class CodeRocketService {
@@ -35,7 +35,7 @@ export class CodeRocketService {
     if (!this.coderocketCliPath) {
       this.coderocketCliPath = await this.findCoderocketCliPath();
       logger.info('CodeRocket服务初始化', {
-        coderocketCliPath: this.coderocketCliPath
+        coderocketCliPath: this.coderocketCliPath,
       });
     }
   }
@@ -74,8 +74,14 @@ export class CodeRocketService {
   /**
    * 执行shell命令并返回结果
    */
-  private async executeShellCommand(command: string, cwd?: string): Promise<{ stdout: string; stderr: string }> {
-    logger.debug('执行Shell命令', { command, cwd: cwd || this.coderocketCliPath });
+  private async executeShellCommand(
+    command: string,
+    cwd?: string,
+  ): Promise<{ stdout: string; stderr: string }> {
+    logger.debug('执行Shell命令', {
+      command,
+      cwd: cwd || this.coderocketCliPath,
+    });
 
     try {
       const { stdout, stderr } = await execAsync(command, {
@@ -90,7 +96,7 @@ export class CodeRocketService {
       logger.debug('Shell命令执行成功', {
         command,
         stdoutLength: stdout.length,
-        stderrLength: stderr.length
+        stderrLength: stderr.length,
       });
 
       return { stdout, stderr };
@@ -103,16 +109,23 @@ export class CodeRocketService {
   /**
    * 调用AI服务管理器脚本
    */
-  private async callAIServiceManager(action: string, ...args: string[]): Promise<string> {
-    const scriptPath = join(this.coderocketCliPath, 'lib', 'ai-service-manager.sh');
+  private async callAIServiceManager(
+    action: string,
+    ...args: string[]
+  ): Promise<string> {
+    const scriptPath = join(
+      this.coderocketCliPath,
+      'lib',
+      'ai-service-manager.sh',
+    );
     const command = `bash "${scriptPath}" ${action} ${args.join(' ')}`;
-    
+
     const { stdout, stderr } = await this.executeShellCommand(command);
-    
+
     if (stderr && !stdout) {
       throw new Error(stderr);
     }
-    
+
     return stdout.trim();
   }
 
@@ -122,14 +135,18 @@ export class CodeRocketService {
   private async createTempPromptFile(customPrompt?: string): Promise<string> {
     const tempDir = tmpdir();
     const tempFile = join(tempDir, `coderocket-prompt-${Date.now()}.md`);
-    
+
     let promptContent = '';
-    
+
     if (customPrompt) {
       promptContent = customPrompt;
     } else {
       // 使用默认提示词
-      const defaultPromptPath = join(this.coderocketCliPath, 'prompts', 'git-commit-review-prompt.md');
+      const defaultPromptPath = join(
+        this.coderocketCliPath,
+        'prompts',
+        'git-commit-review-prompt.md',
+      );
       try {
         promptContent = await readFile(defaultPromptPath, 'utf-8');
       } catch {
@@ -137,7 +154,7 @@ export class CodeRocketService {
         promptContent = this.getDefaultPrompt();
       }
     }
-    
+
     await writeFile(tempFile, promptContent, 'utf-8');
     return tempFile;
   }
@@ -178,7 +195,10 @@ export class CodeRocketService {
   /**
    * 解析审查结果
    */
-  private parseReviewResult(output: string, aiService: AIService): ReviewResult {
+  private parseReviewResult(
+    output: string,
+    aiService: AIService,
+  ): ReviewResult {
     const lines = output.split('\n');
     let status: ReviewStatus = '🔍';
     let summary = '';
@@ -204,7 +224,9 @@ export class CodeRocketService {
     // 提取摘要（通常是第一段非空内容）
     const nonEmptyLines = lines.filter(line => line.trim());
     if (nonEmptyLines.length > 0) {
-      summary = nonEmptyLines[0].substring(0, 200) + (nonEmptyLines[0].length > 200 ? '...' : '');
+      summary =
+        nonEmptyLines[0].substring(0, 200) +
+        (nonEmptyLines[0].length > 200 ? '...' : '');
     }
 
     return {
@@ -224,13 +246,16 @@ export class CodeRocketService {
     logger.info('开始代码审查', {
       language: request.language,
       codeLength: request.code.length,
-      aiService: request.ai_service
+      aiService: request.ai_service,
     });
 
     try {
       // 创建临时文件存储代码
       const tempDir = tmpdir();
-      const tempCodeFile = join(tempDir, `code-${Date.now()}.${this.getFileExtension(request.language)}`);
+      const tempCodeFile = join(
+        tempDir,
+        `code-${Date.now()}.${this.getFileExtension(request.language)}`,
+      );
       await writeFile(tempCodeFile, request.code, 'utf-8');
 
       // 创建提示词文件
@@ -252,18 +277,28 @@ ${request.code}
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || 'gemini';
-      const scriptPath = join(this.coderocketCliPath, 'lib', 'ai-service-manager.sh');
+      const scriptPath = join(
+        this.coderocketCliPath,
+        'lib',
+        'ai-service-manager.sh',
+      );
 
       // 使用intelligent_ai_review函数
       const command = `source "${scriptPath}" && intelligent_ai_review "${aiService}" "${promptFile}" "${reviewPrompt}"`;
       const { stdout } = await this.executeShellCommand(command);
 
       const result = this.parseReviewResult(stdout, aiService);
-      logger.info('代码审查完成', { status: result.status, aiService: result.ai_service_used });
+      logger.info('代码审查完成', {
+        status: result.status,
+        aiService: result.ai_service_used,
+      });
 
       return result;
     } catch (error) {
-      logger.error('代码审查失败', error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        '代码审查失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
       throw errorHandler.handleError(error, 'reviewCode');
     }
   }
@@ -289,7 +324,7 @@ ${request.code}
       shell: 'sh',
       bash: 'sh',
     };
-    
+
     return extensions[language?.toLowerCase() || ''] || 'txt';
   }
 
@@ -303,7 +338,9 @@ ${request.code}
       const promptFile = await this.createTempPromptFile(request.custom_prompt);
 
       // 构建审查提示词
-      const commitInfo = request.commit_hash ? `特定提交: ${request.commit_hash}` : '最新提交';
+      const commitInfo = request.commit_hash
+        ? `特定提交: ${request.commit_hash}`
+        : '最新提交';
       const reviewPrompt = `请对Git仓库中的${commitInfo}进行代码审查：
 
 仓库路径: ${repoPath}
@@ -313,14 +350,20 @@ ${request.commit_hash ? `提交哈希: ${request.commit_hash}` : ''}
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || 'gemini';
-      const scriptPath = join(this.coderocketCliPath, 'lib', 'ai-service-manager.sh');
-      
+      const scriptPath = join(
+        this.coderocketCliPath,
+        'lib',
+        'ai-service-manager.sh',
+      );
+
       const command = `cd "${repoPath}" && source "${scriptPath}" && intelligent_ai_review "${aiService}" "${promptFile}" "${reviewPrompt}"`;
       const { stdout } = await this.executeShellCommand(command, repoPath);
 
       return this.parseReviewResult(stdout, aiService);
     } catch (error) {
-      throw new Error(`Git提交审查失败: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Git提交审查失败: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -358,21 +401,29 @@ ${fileContents.join('\n\n')}
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || 'gemini';
-      const scriptPath = join(this.coderocketCliPath, 'lib', 'ai-service-manager.sh');
+      const scriptPath = join(
+        this.coderocketCliPath,
+        'lib',
+        'ai-service-manager.sh',
+      );
 
       const command = `source "${scriptPath}" && intelligent_ai_review "${aiService}" "${promptFile}" "${reviewPrompt}"`;
       const { stdout } = await this.executeShellCommand(command, repoPath);
 
       return this.parseReviewResult(stdout, aiService);
     } catch (error) {
-      throw new Error(`文件审查失败: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `文件审查失败: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
   /**
    * 配置AI服务
    */
-  async configureAIService(request: ConfigureAIServiceRequest): Promise<SuccessResponse> {
+  async configureAIService(
+    request: ConfigureAIServiceRequest,
+  ): Promise<SuccessResponse> {
     await this.ensureInitialized();
     try {
       // 设置AI服务
@@ -384,7 +435,11 @@ ${fileContents.join('\n\n')}
         process.env[envVarName] = request.api_key;
 
         // 保存到配置文件
-        await this.saveAPIKeyToConfig(request.service, request.api_key, request.scope);
+        await this.saveAPIKeyToConfig(
+          request.service,
+          request.api_key,
+          request.scope,
+        );
       }
 
       // 设置其他配置项
@@ -410,7 +465,9 @@ ${fileContents.join('\n\n')}
         },
       };
     } catch (error) {
-      throw new Error(`AI服务配置失败: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `AI服务配置失败: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -429,14 +486,18 @@ ${fileContents.join('\n\n')}
   /**
    * 保存API密钥到配置文件
    */
-  private async saveAPIKeyToConfig(service: AIService, apiKey: string, scope: string): Promise<void> {
-    const configDir = scope === 'global'
-      ? join(process.env.HOME || '~', '.coderocket')
-      : process.cwd();
+  private async saveAPIKeyToConfig(
+    service: AIService,
+    apiKey: string,
+    scope: string,
+  ): Promise<void> {
+    const configDir =
+      scope === 'global'
+        ? join(process.env.HOME || '~', '.coderocket')
+        : process.cwd();
 
-    const configFile = scope === 'global'
-      ? join(configDir, 'env')
-      : join(configDir, '.env');
+    const configFile =
+      scope === 'global' ? join(configDir, 'env') : join(configDir, '.env');
 
     // 确保配置目录存在
     await mkdir(dirname(configFile), { recursive: true });
@@ -455,7 +516,9 @@ ${fileContents.join('\n\n')}
 
       // 更新或添加配置行
       const lines = existingConfig.split('\n');
-      const existingLineIndex = lines.findIndex(line => line.startsWith(`${envVarName}=`));
+      const existingLineIndex = lines.findIndex(line =>
+        line.startsWith(`${envVarName}=`),
+      );
 
       if (existingLineIndex >= 0) {
         lines[existingLineIndex] = `${envVarName}=${apiKey}`;
@@ -498,7 +561,9 @@ ${fileContents.join('\n\n')}
         project_config_path: join(process.cwd(), '.env'),
       };
     } catch (error) {
-      throw new Error(`获取AI服务状态失败: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `获取AI服务状态失败: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
