@@ -137,13 +137,9 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-.idea/.gitignore
-.idea/coderocket-mcp.iml
-.idea/misc.xml
-.idea/modules.xml
-.idea/vcs.xml
+.idea/
 
 # Crush
 .crush
-.idea/inspectionProfiles/Project_Default.xml
-review_logs/review_2025-08-01_12-00-00.md
+
+review_logs/

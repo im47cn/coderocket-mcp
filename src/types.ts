@@ -54,6 +54,7 @@ export const ConfigureAIServiceRequestSchema = z.object({
   service: AIServiceSchema.describe('要配置的AI服务'),
   scope: ConfigScopeSchema.optional().default('project').describe('配置范围'),
   api_key: z.string().optional().describe('API密钥（可选）'),
+  language: z.string().optional().describe('AI服务语言设置（如：zh-CN, en-US）'),
   timeout: z.number().optional().describe('超时时间（秒）'),
   max_retries: z.number().optional().describe('最大重试次数'),
 });
@@ -88,6 +89,7 @@ export const ServiceStatusResponseSchema = z.object({
   current_service: AIServiceSchema.describe('当前使用的AI服务'),
   services: z.array(AIServiceStatusSchema).describe('所有AI服务的状态'),
   auto_switch_enabled: z.boolean().describe('是否启用自动切换'),
+  language: z.string().optional().describe('AI服务语言设置'),
   global_config_path: z.string().optional().describe('全局配置文件路径'),
   project_config_path: z.string().optional().describe('项目配置文件路径'),
   timeout: z.number().optional().describe('超时时间（秒）'),

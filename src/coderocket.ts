@@ -67,6 +67,7 @@ export class ConfigManager {
       AI_TIMEOUT: '30',
       AI_MAX_RETRIES: '3',
       AI_RETRY_DELAY: '2',
+      AI_LANGUAGE: 'zh-CN',
       NODE_ENV: 'production',
       DEBUG: 'false',
     };
@@ -202,6 +203,13 @@ export class ConfigManager {
    */
   static isAutoSwitchEnabled(): boolean {
     return this.get('AI_AUTO_SWITCH', 'true').toLowerCase() === 'true';
+  }
+
+  /**
+   * 获取AI服务语言设置
+   */
+  static getAILanguage(): string {
+    return this.get('AI_LANGUAGE', 'zh-CN');
   }
 
   /**
@@ -341,7 +349,9 @@ export class PromptManager {
 - 具体问题和改进建议
 - 优先级排序的建议列表
 
-请确保审阅报告专业、准确、可操作。`,
+请确保审阅报告专业、准确、可操作。
+
+**重要：请务必使用中文回复，所有审查结果、建议和评价都必须用中文表达。**`,
 
       'code-review-prompt': `# 代码审查提示词
 
@@ -388,7 +398,9 @@ export class PromptManager {
 
 **优秀实践**: [值得称赞的地方]
 
-请确保建议具体、可操作，并提供代码示例（如适用）。`
+请确保建议具体、可操作，并提供代码示例（如适用）。
+
+**重要：请务必使用中文回复，所有审查结果、建议和评价都必须用中文表达。**`
     };
 
     return defaultPrompts[name] || `# 默认提示词\n\n请提供专业的代码审查和分析。`;
@@ -821,10 +833,20 @@ export class CodeRocketService {
       // 加载提示词
       const promptContent = await PromptManager.loadPrompt(promptName);
 
+      // 获取语言配置
+      const language = ConfigManager.getAILanguage();
+
+      // 添加语言要求到提示词
+      const languageInstruction = language === 'zh-CN'
+        ? '\n\n**重要：请务必使用中文回复，所有审查结果、建议和评价都必须用中文表达。**'
+        : '\n\n**Important: Please respond in English.**';
+
+      const enhancedPrompt = promptContent + languageInstruction;
+
       // 调用AI服务
       const { result, usedService } = await this.aiManager.intelligentCall(
         aiService,
-        promptContent,
+        enhancedPrompt,
         additionalPrompt
       );
 
@@ -924,7 +946,9 @@ ${request.code}
 4. 安全性检查
 5. 最佳实践遵循情况
 
-${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
+${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
+
+**重要：请务必使用中文回复，所有审查结果、建议和评价都必须用中文表达。**`;
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || ConfigManager.getAIService();
@@ -1008,7 +1032,9 @@ ${commitInfo}
 4. 检查是否遗漏相关文件修改
 5. 提供具体的改进建议
 
-${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
+${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
+
+**重要：请务必使用中文回复，所有审查结果、建议和评价都必须用中文表达。**`;
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || ConfigManager.getAIService();
@@ -1126,6 +1152,11 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
       }
 
       // 设置其他配置项
+      if (request.language) {
+        process.env.AI_LANGUAGE = request.language;
+        await this.saveConfigToFile('AI_LANGUAGE', request.language, request.scope);
+      }
+
       if (request.timeout) {
         process.env.AI_TIMEOUT = request.timeout.toString();
         await this.saveConfigToFile('AI_TIMEOUT', request.timeout.toString(), request.scope);
@@ -1247,6 +1278,7 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
         current_service: current,
         services,
         auto_switch_enabled: ConfigManager.isAutoSwitchEnabled(),
+        language: ConfigManager.getAILanguage(),
         global_config_path: join(homedir(), '.coderocket', 'env'),
         project_config_path: join(process.cwd(), '.env'),
         timeout: ConfigManager.getTimeout(),

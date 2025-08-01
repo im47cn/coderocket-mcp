@@ -120,6 +120,10 @@ function createJsonSchemas() {
           type: 'string',
           description: 'API密钥（可选）'
         },
+        language: {
+          type: 'string',
+          description: 'AI服务语言设置（可选，如：zh-CN表示中文，en-US表示英文）'
+        },
         timeout: {
           type: 'number',
           description: '超时时间（秒）'
@@ -147,7 +151,7 @@ class CodeRocketMCPServer {
 
   constructor() {
     // 读取实际版本号
-    let version = '1.1.5'; // 默认版本
+    let version = '1.1.6'; // 默认版本
     try {
       const packagePath = resolve(__dirname, '../package.json');
       const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
