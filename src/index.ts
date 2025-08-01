@@ -15,13 +15,7 @@ import {
   ReviewFilesRequestSchema,
 } from './types.js';
 import { toolDefinitions } from './toolDefinitions.js';
-import { showStartupInfo, showSuccessBanner } from './banner.js';
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 
 
@@ -36,20 +30,10 @@ class CodeRocketMCPServer {
   private codeRocketService: CodeRocketService | null = null;
 
   constructor() {
-    // 读取实际版本号
-    let version = '1.2.4'; // 默认版本
-    try {
-      const packagePath = resolve(__dirname, '../package.json');
-      const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
-      version = packageJson.version;
-    } catch (error) {
-      console.error('⚠️ 无法读取版本信息，使用默认版本:', version);
-    }
-
     this.server = new Server(
       {
         name: 'coderocket-mcp',
-        version: version,
+        version: '1.3.2',
       },
       {
         capabilities: {
@@ -184,29 +168,15 @@ class CodeRocketMCPServer {
       );
       await ConfigManager.initialize();
 
-      // 在 MCP 服务器模式下，禁用 banner 输出以避免 IDE 误认为启动失败
-      // 只有在 DEBUG 模式下才显示启动信息
-      if (process.env.DEBUG === 'true') {
-        showSuccessBanner('配置系统初始化完成');
-      }
-
       // 现在可以安全地初始化 CodeRocketService
       this.codeRocketService = new CodeRocketService();
 
       const transport = new StdioServerTransport();
       await this.server.connect(transport);
-
-      // 在 MCP 服务器模式下，禁用启动信息输出
-      if (process.env.DEBUG === 'true') {
-        showStartupInfo();
-      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       console.error('❌ CodeRocket MCP 服务器启动失败:', errorMessage);
-      if (process.env.DEBUG === 'true') {
-        console.error('🔍 详细错误信息:', error);
-      }
       process.exit(1);
     }
   }
