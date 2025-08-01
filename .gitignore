@@ -143,3 +143,4 @@ vite.config.ts.timestamp-*
 .crush
 
 review_logs/
+*.txt

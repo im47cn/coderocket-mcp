@@ -151,12 +151,18 @@ else if (!command || command === 'start') {
     case 'help':
     case '--help':
     case '-h':
-      // 显示帮助信息时也显示 banner
+      // 只在 DEBUG 模式下显示 banner，避免 IDE 兼容性问题
       try {
-        const bannerPath = resolve(__dirname, '../dist/banner.js');
-        const { showMiniBanner } = await import(bannerPath);
-        showMiniBanner();
-        console.log('');
+        if (process.env.DEBUG === 'true') {
+          const bannerPath = resolve(__dirname, '../dist/banner.js');
+          const { showMiniBanner } = await import(bannerPath);
+          showMiniBanner();
+          console.log('');
+        } else {
+          // 生产模式下显示简洁的标题
+          console.log('CodeRocket MCP - 独立的AI驱动代码审查服务器');
+          console.log('');
+        }
       } catch (error) {
         // 如果 banner 加载失败，继续显示帮助信息
         console.log('CodeRocket MCP - 独立的AI驱动代码审查服务器');
@@ -198,14 +204,16 @@ else if (!command || command === 'start') {
     case 'version':
     case '--version':
     case '-v':
-      // 显示版本信息时也显示 banner
+      // 只在 DEBUG 模式下显示 banner，避免 IDE 兼容性问题
       try {
-        // 动态导入 banner 模块
-        const bannerPath = resolve(__dirname, '../dist/banner.js');
-        const { showMiniBanner } = await import(bannerPath);
+        if (process.env.DEBUG === 'true') {
+          // 动态导入 banner 模块
+          const bannerPath = resolve(__dirname, '../dist/banner.js');
+          const { showMiniBanner } = await import(bannerPath);
 
-        showMiniBanner();
-        console.log('');
+          showMiniBanner();
+          console.log('');
+        }
 
         // 读取package.json获取详细版本信息
         const packagePath = resolve(__dirname, '../package.json');
@@ -213,10 +221,20 @@ else if (!command || command === 'start') {
           readFileSync(packagePath, 'utf-8')
         );
 
-        console.log(`📦 版本: v${packageJson.version}`);
-        console.log(`🏠 安装路径: ${resolve(__dirname, '..')}`);
-        console.log(`🔗 NPM包: @yeepay/coderocket-mcp`);
-        console.log(`📚 文档: https://github.com/im47cn/coderocket-mcp`);
+        if (process.env.DEBUG === 'true') {
+          console.log(`📦 版本: v${packageJson.version}`);
+          console.log(`🏠 安装路径: ${resolve(__dirname, '..')}`);
+          console.log(`🔗 NPM包: @yeepay/coderocket-mcp`);
+          console.log(`📚 文档: https://github.com/im47cn/coderocket-mcp`);
+        } else {
+          // 生产模式下只输出简洁的版本信息
+          console.log(`CodeRocket MCP v${packageJson.version} 🚀 - AI 驱动的代码审查服务器`);
+          console.log('');
+          console.log(`📦 版本: v${packageJson.version}`);
+          console.log(`🏠 安装路径: ${resolve(__dirname, '..')}`);
+          console.log(`🔗 NPM包: @yeepay/coderocket-mcp`);
+          console.log(`📚 文档: https://github.com/im47cn/coderocket-mcp`);
+        }
 
       } catch (error) {
         console.error('⚠️ 无法读取版本信息:', error.message);
