@@ -8,9 +8,7 @@ export type AIService = z.infer<typeof AIServiceSchema>;
 export const ReviewStatusSchema = z.enum(['✅', '⚠️', '❌', '🔍']);
 export type ReviewStatus = z.infer<typeof ReviewStatusSchema>;
 
-// 配置范围
-export const ConfigScopeSchema = z.enum(['project', 'global']);
-export type ConfigScope = z.infer<typeof ConfigScopeSchema>;
+
 
 // 代码审查请求（传统方式，保留向后兼容）
 export const ReviewCodeRequestSchema = z.object({
@@ -70,21 +68,7 @@ export const ReviewFilesRequestSchema = z.object({
 });
 export type ReviewFilesRequest = z.infer<typeof ReviewFilesRequestSchema>;
 
-// AI服务配置请求
-export const ConfigureAIServiceRequestSchema = z.object({
-  service: AIServiceSchema.describe('要配置的AI服务'),
-  scope: ConfigScopeSchema.optional().default('project').describe('配置范围'),
-  api_key: z.string().optional().describe('API密钥（可选）'),
-  language: z
-    .string()
-    .optional()
-    .describe('AI服务语言设置（如：zh-CN, en-US）'),
-  timeout: z.number().optional().describe('超时时间（秒）'),
-  max_retries: z.number().optional().describe('最大重试次数'),
-});
-export type ConfigureAIServiceRequest = z.infer<
-  typeof ConfigureAIServiceRequestSchema
->;
+
 
 // 审查结果
 export const ReviewResultSchema = z.object({
@@ -108,18 +92,7 @@ export const AIServiceStatusSchema = z.object({
 });
 export type AIServiceStatus = z.infer<typeof AIServiceStatusSchema>;
 
-// 服务状态响应
-export const ServiceStatusResponseSchema = z.object({
-  current_service: AIServiceSchema.describe('当前使用的AI服务'),
-  services: z.array(AIServiceStatusSchema).describe('所有AI服务的状态'),
-  auto_switch_enabled: z.boolean().describe('是否启用自动切换'),
-  language: z.string().optional().describe('AI服务语言设置'),
-  global_config_path: z.string().optional().describe('全局配置文件路径'),
-  project_config_path: z.string().optional().describe('项目配置文件路径'),
-  timeout: z.number().optional().describe('超时时间（秒）'),
-  max_retries: z.number().optional().describe('最大重试次数'),
-});
-export type ServiceStatusResponse = z.infer<typeof ServiceStatusResponseSchema>;
+
 
 // 错误响应
 export const ErrorResponseSchema = z.object({
@@ -129,10 +102,4 @@ export const ErrorResponseSchema = z.object({
 });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
 
-// 成功响应
-export const SuccessResponseSchema = z.object({
-  success: z.boolean().describe('操作是否成功'),
-  message: z.string().describe('成功信息'),
-  data: z.any().optional().describe('返回数据'),
-});
-export type SuccessResponse = z.infer<typeof SuccessResponseSchema>;
+

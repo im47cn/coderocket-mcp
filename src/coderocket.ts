@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { writeFile, readFile, mkdir } from 'fs/promises';
-import { join, dirname, resolve } from 'path';
+import { readFile } from 'fs/promises';
+import { join, resolve } from 'path';
 import { homedir } from 'os';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Anthropic from '@anthropic-ai/sdk';
@@ -10,10 +10,7 @@ import {
   ReviewChangesRequest,
   ReviewCommitRequest,
   ReviewFilesRequest,
-  ConfigureAIServiceRequest,
   ReviewResult,
-  ServiceStatusResponse,
-  SuccessResponse,
   AIService,
   ReviewStatus,
 } from './types.js';
@@ -1400,199 +1397,9 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
     }
   }
 
-  /**
-   * 配置AI服务
-   */
-  async configureAIService(
-    request: ConfigureAIServiceRequest,
-  ): Promise<SuccessResponse> {
-    await this.ensureInitialized();
-    logger.info('开始配置AI服务', {
-      service: request.service,
-      scope: request.scope,
-      hasApiKey: !!request.api_key,
-    });
 
-    try {
-      // 如果提供了API密钥，设置环境变量并保存到配置文件
-      if (request.api_key) {
-        const envVarName = ConfigManager.getAPIKeyEnvVar(request.service);
-        process.env[envVarName] = request.api_key;
 
-        // 保存到配置文件
-        await this.saveAPIKeyToConfig(
-          request.service,
-          request.api_key,
-          request.scope,
-        );
-      }
 
-      // 设置主要AI服务
-      if (request.service) {
-        process.env.AI_SERVICE = request.service;
-        await this.saveConfigToFile(
-          'AI_SERVICE',
-          request.service,
-          request.scope,
-        );
-      }
 
-      // 设置其他配置项
-      if (request.language) {
-        process.env.AI_LANGUAGE = request.language;
-        await this.saveConfigToFile(
-          'AI_LANGUAGE',
-          request.language,
-          request.scope,
-        );
-      }
 
-      if (request.timeout) {
-        process.env.AI_TIMEOUT = request.timeout.toString();
-        await this.saveConfigToFile(
-          'AI_TIMEOUT',
-          request.timeout.toString(),
-          request.scope,
-        );
-      }
-
-      if (request.max_retries) {
-        process.env.AI_MAX_RETRIES = request.max_retries.toString();
-        await this.saveConfigToFile(
-          'AI_MAX_RETRIES',
-          request.max_retries.toString(),
-          request.scope,
-        );
-      }
-
-      logger.info('AI服务配置完成', {
-        service: request.service,
-        scope: request.scope,
-      });
-
-      return {
-        success: true,
-        message: `AI服务 ${request.service} 配置成功`,
-        data: {
-          service: request.service,
-          scope: request.scope,
-          configured_options: {
-            api_key: !!request.api_key,
-            timeout: request.timeout,
-            max_retries: request.max_retries,
-          },
-        },
-      };
-    } catch (error) {
-      logger.error(
-        'AI服务配置失败',
-        error instanceof Error ? error : new Error(String(error)),
-      );
-      throw errorHandler.handleError(error, 'configureAIService');
-    }
-  }
-
-  /**
-   * 保存配置项到文件
-   */
-  private async saveConfigToFile(
-    key: string,
-    value: string,
-    scope: string,
-  ): Promise<void> {
-    const { file: configFile } = ConfigManager.getConfigPath(scope);
-
-    // 确保配置目录存在
-    await mkdir(dirname(configFile), { recursive: true });
-
-    try {
-      // 读取现有配置
-      let existingConfig = '';
-      try {
-        existingConfig = await readFile(configFile, 'utf-8');
-      } catch {
-        // 文件不存在，创建新的
-      }
-
-      // 更新或添加配置行
-      const lines = existingConfig.split('\n');
-      const existingLineIndex = lines.findIndex(line =>
-        line.trim().startsWith(`${key}=`),
-      );
-
-      const configLine = `${key}=${value}`;
-      if (existingLineIndex >= 0) {
-        lines[existingLineIndex] = configLine;
-      } else {
-        lines.push(configLine);
-      }
-
-      // 写回文件
-      await writeFile(configFile, lines.join('\n'), 'utf-8');
-
-      logger.debug('配置已保存', { key, configFile, scope });
-    } catch (error) {
-      logger.error(
-        '保存配置失败',
-        error instanceof Error ? error : new Error(String(error)),
-        { key, configFile },
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * 保存API密钥到配置文件
-   *
-   * ⚠️ 安全警告：API密钥将以明文形式存储在配置文件中。
-   * 请确保配置文件的访问权限受到适当限制。
-   * 建议使用环境变量或更安全的密钥管理方案。
-   */
-  private async saveAPIKeyToConfig(
-    service: AIService,
-    apiKey: string,
-    scope: string,
-  ): Promise<void> {
-    // 记录安全警告
-    logger.warn('API密钥将以明文形式存储，请确保文件访问权限安全', {
-      service,
-      scope,
-    });
-
-    const envVarName = ConfigManager.getAPIKeyEnvVar(service);
-    await this.saveConfigToFile(envVarName, apiKey, scope);
-  }
-
-  /**
-   * 获取AI服务状态
-   */
-  async getAIServiceStatus(): Promise<ServiceStatusResponse> {
-    await this.ensureInitialized();
-    logger.info('获取AI服务状态');
-
-    try {
-      // 获取当前配置的AI服务
-      const current = ConfigManager.getAIService();
-
-      // 获取所有服务状态
-      const services = this.aiManager.getServicesStatus();
-
-      return {
-        current_service: current,
-        services,
-        auto_switch_enabled: ConfigManager.isAutoSwitchEnabled(),
-        language: ConfigManager.getAILanguage(),
-        global_config_path: join(homedir(), '.coderocket', 'env'),
-        project_config_path: join(process.cwd(), '.env'),
-        timeout: ConfigManager.getTimeout(),
-        max_retries: ConfigManager.getMaxRetries(),
-      };
-    } catch (error) {
-      logger.error(
-        '获取AI服务状态失败',
-        error instanceof Error ? error : new Error(String(error)),
-      );
-      throw errorHandler.handleError(error, 'getAIServiceStatus');
-    }
-  }
 }

@@ -4,7 +4,6 @@ import {
   ReviewChangesRequestSchema,
   ReviewCommitRequestSchema,
   ReviewFilesRequestSchema,
-  ConfigureAIServiceRequestSchema,
 } from './types.js';
 
 export type ToolDef = {
@@ -107,47 +106,5 @@ export const toolDefinitions: ToolDef[] = [
 
 **输出格式**: 综合性的多文件审查报告，包含文件级和项目级分析`,
     schema: ReviewFilesRequestSchema,
-  },
-  {
-    name: 'configure_ai_service',
-    description: `⚙️ **AI服务配置管理工具**
-
-**功能**: 配置和管理CodeRocket使用的AI服务，包括API密钥设置、服务选择和参数调优。
-
-**支持的AI服务**:
-- **Gemini**: Google的先进AI模型，擅长代码分析和建议
-- **ClaudeCode**: Anthropic的专业代码审查模型
-
-**配置选项**:
-- API密钥管理（项目级/全局级）
-- 服务优先级设置
-- 超时和重试参数
-- 自动故障转移配置
-
-**安全性**: API密钥加密存储，支持环境变量配置
-
-**输出格式**: 配置操作结果和当前配置状态`,
-    schema: ConfigureAIServiceRequestSchema,
-  },
-  {
-    name: 'get_ai_service_status',
-    description: `📊 **AI服务状态监控工具**
-
-**功能**: 获取所有已配置AI服务的实时状态信息，包括可用性、配置状态和性能指标。
-
-**监控信息**:
-- 服务连接状态
-- API配额使用情况
-- 响应时间统计
-- 错误率监控
-- 配置完整性检查
-
-**故障诊断**:
-- 自动检测配置问题
-- 提供修复建议
-- 显示详细错误信息
-
-**输出格式**: 完整的服务状态报告，包含所有服务的健康状况`,
-    schema: z.object({}), // 无参数工具
   },
 ];

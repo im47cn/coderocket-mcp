@@ -13,7 +13,6 @@ import {
   ReviewChangesRequestSchema,
   ReviewCommitRequestSchema,
   ReviewFilesRequestSchema,
-  ConfigureAIServiceRequestSchema,
 } from './types.js';
 import { toolDefinitions } from './toolDefinitions.js';
 import { showStartupInfo, showSuccessBanner } from './banner.js';
@@ -153,32 +152,6 @@ class CodeRocketMCPServer {
           case 'review_files': {
             const parsedArgs = ReviewFilesRequestSchema.parse(args);
             const result = await this.codeRocketService.reviewFiles(parsedArgs);
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(result, null, 2),
-                },
-              ],
-            };
-          }
-
-          case 'configure_ai_service': {
-            const parsedArgs = ConfigureAIServiceRequestSchema.parse(args);
-            const result =
-              await this.codeRocketService.configureAIService(parsedArgs);
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(result, null, 2),
-                },
-              ],
-            };
-          }
-
-          case 'get_ai_service_status': {
-            const result = await this.codeRocketService.getAIServiceStatus();
             return {
               content: [
                 {
