@@ -1,7 +1,7 @@
 {
   "name": "@yeepay/coderocket-mcp",
-  "version": "1.0.1",
-  "description": "CodeRocket MCP - AI-powered code review server for Model Context Protocol",
+  "version": "1.1.0",
+  "description": "CodeRocket MCP - Independent AI-powered code review server for Model Context Protocol",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
@@ -35,12 +35,18 @@
     "programming-tools",
     "automation",
     "claude",
-    "ai-tools"
+    "ai-tools",
+    "independent",
+    "standalone",
+    "no-dependencies"
   ],
   "author": "dreambt <dreambt@gmail.com>",
   "license": "Apache-2.0",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.5.0",
+    "@google/generative-ai": "^0.21.0",
+    "@anthropic-ai/sdk": "^0.27.0",
+    "axios": "^1.6.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {

@@ -90,6 +90,8 @@ export const ServiceStatusResponseSchema = z.object({
   auto_switch_enabled: z.boolean().describe('是否启用自动切换'),
   global_config_path: z.string().optional().describe('全局配置文件路径'),
   project_config_path: z.string().optional().describe('项目配置文件路径'),
+  timeout: z.number().optional().describe('超时时间（秒）'),
+  max_retries: z.number().optional().describe('最大重试次数'),
 });
 export type ServiceStatusResponse = z.infer<typeof ServiceStatusResponseSchema>;
 

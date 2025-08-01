@@ -8,14 +8,16 @@
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 
-一个基于 Model Context Protocol (MCP) 的智能代码审查 MCP，集成了 CodeRocket-CLI 的强大功能，为AI编程工具提供专业的代码审查能力。
+一个完全独立的基于 Model Context Protocol (MCP) 的智能代码审查服务器，为AI编程工具提供专业的代码审查能力。
 
 ## 🚀 核心功能
 
+- **完全独立运行**：无需依赖任何外部CLI工具，开箱即用
 - **多维度代码审查**：支持代码片段、Git提交、文件列表的全面审查
-- **多AI服务支持**：集成Gemini、OpenCode、ClaudeCode等多种AI服务
+- **多AI服务支持**：原生集成Gemini、ClaudeCode、OpenCode等AI服务
 - **智能故障转移**：自动切换AI服务，确保审查的可靠性
-- **灵活配置管理**：支持项目级和全局级配置
+- **灵活配置管理**：支持环境变量和.env文件配置
+- **专业提示词系统**：内置专业代码审查提示词，支持自定义
 - **详细错误处理**：提供用户友好的错误信息和解决建议
 - **完整日志记录**：详细的操作日志，便于调试和监控
 
@@ -31,17 +33,31 @@
 
 ## 🛠 安装
 
-### 正式安装（推荐）
+### 快速安装（推荐）
 
 #### 前置要求
 
 1. **Node.js**: >= 18.0.0
-2. **CodeRocket-CLI**: 需要先安装 [CodeRocket-CLI](https://github.com/im47cn/coderocket-cli)
-3. **AI服务**: 至少配置一个AI服务（Gemini、OpenCode或ClaudeCode）
+2. **AI服务API密钥**: 至少配置一个AI服务（Gemini、ClaudeCode或OpenCode）
 
-#### 安装过程
+#### 直接使用（无需安装）
 
-从npm注册表安装：
+使用 npx 直接运行，无需全局安装：
+
+```bash
+# 直接启动 CodeRocket MCP 服务器
+npx @yeepay/coderocket-mcp
+
+# 查看帮助信息
+npx @yeepay/coderocket-mcp help
+
+# 查看版本信息
+npx @yeepay/coderocket-mcp version
+```
+
+#### 全局安装（可选）
+
+如果需要全局安装：
 
 ```bash
 # 1. 全局安装CodeRocket MCP
@@ -283,23 +299,30 @@ npm run build
 **问题 2**: AI服务不可用
 
 ```bash
-# 检查AI服务状态
-gemini --version
-opencode --version
-claudecode --version
+# 检查API密钥配置
+echo $GEMINI_API_KEY
+echo $CLAUDECODE_API_KEY
+echo $OPENCODE_API_KEY
 
-# 重新配置AI服务
-gemini config
+# 检查配置文件
+cat ~/.coderocket/env
+cat .env
+
+# 使用get_ai_service_status工具检查服务状态
+npx @yeepay/coderocket-mcp test
 ```
 
-**问题 3**: CodeRocket-CLI路径错误
+**问题 3**: 配置文件权限问题
 
 ```bash
-# 设置环境变量指定路径
-export CODEROCKET_CLI_PATH=/path/to/coderocket-cli
+# 检查配置目录权限
+ls -la ~/.coderocket/
+chmod 700 ~/.coderocket/
+chmod 600 ~/.coderocket/env
 
-# 或在项目中创建符号链接
-ln -s /path/to/coderocket-cli ./coderocket-cli
+# 检查项目配置文件
+ls -la .env
+chmod 600 .env
 ```
 
 ### 调试模式
@@ -307,14 +330,16 @@ ln -s /path/to/coderocket-cli ./coderocket-cli
 启用详细日志：
 
 ```bash
-NODE_ENV=development npm start
+DEBUG=true NODE_ENV=development npx @yeepay/coderocket-mcp
 ```
 
-查看日志文件：
+查看详细错误信息：
 
 ```bash
-# 日志文件位置
-tail -f /tmp/coderocket-mcp.log
+# 启用调试模式
+export DEBUG=true
+export NODE_ENV=development
+npx @yeepay/coderocket-mcp
 ```
 
 ## 👨‍💻 开发指南
@@ -379,21 +404,24 @@ npm test
 
 ## 🔗 相关链接
 
-- [CodeRocket-CLI](https://github.com/im47cn/coderocket-cli) - 核心CLI工具
+- [CodeRocket-CLI](https://github.com/im47cn/coderocket-cli) - 命令行版本的代码审查工具
 - [Model Context Protocol](https://modelcontextprotocol.io/) - MCP官方文档
 - [问题反馈](https://github.com/im47cn/coderocket-mcp/issues) - 报告问题或建议
+- [NPM包](https://www.npmjs.com/package/@yeepay/coderocket-mcp) - NPM官方页面
 
 ## 📊 特性对比
 
 | 功能 | CodeRocket-CLI | CodeRocket-MCP |
 |------|----------------|----------------|
-| Git Hooks集成 | ✅ | ❌ |
+| 独立运行 | ❌ (需要配置) | ✅ (开箱即用) |
 | MCP协议支持 | ❌ | ✅ |
 | 代码片段审查 | ❌ | ✅ |
 | AI工具集成 | ❌ | ✅ |
 | 多AI服务支持 | ✅ | ✅ |
+| Git Hooks集成 | ✅ | ❌ |
 | 自动MR创建 | ✅ | ❌ |
 | 详细审查报告 | ✅ | ✅ |
+| 环境变量配置 | ✅ | ✅ |
 
 ---
 
