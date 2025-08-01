@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4] - 2025-08-01
+
+### 🎨 Enhanced User Experience: Banner Integration
+
+#### ✨ Added
+- **Banner in Version Command**: Added beautiful ASCII Art banner to `version` command output
+- **Banner in Help Command**: Added banner display to `help` command for consistent branding
+- **Enhanced Version Info**: Version command now shows detailed package information including:
+  - Package version with emoji indicators
+  - Installation path for debugging
+  - NPM package name for reference
+  - Documentation link for easy access
+
+#### 🔧 Fixed
+- **Duplicate Help Text**: Removed duplicate "用法" (Usage) line in help command output
+- **Consistent Branding**: All user-facing commands now display the professional banner
+- **Better User Experience**: Commands provide more informative and visually appealing output
+
+#### 🧪 Quality Assurance
+- **Tested All Commands**: Verified banner display in `version`, `help`, and startup commands
+- **Error Handling**: Added fallback behavior if banner module fails to load
+- **No Breaking Changes**: All existing functionality preserved with enhanced presentation
+
+---
+
 ## [1.2.3] - 2025-08-01
 
 ### 🔧 Critical Dependency Fix: Complete Independence
