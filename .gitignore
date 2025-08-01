@@ -146,3 +146,4 @@ vite.config.ts.timestamp-*
 # Crush
 .crush
 .idea/inspectionProfiles/Project_Default.xml
+review_logs/review_2025-08-01_12-00-00.md
