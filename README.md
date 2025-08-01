@@ -155,7 +155,7 @@ npx -y @yeepay/coderocket-mcp test
   "mcp_servers": [
     {
       "name": "coderocket",
-      "command": ["coderocket-mcp", "start"],
+      "command": ["coderocket-mcp"],
       "environment": {
         "AI_SERVICE": "gemini",
         "GEMINI_API_KEY": "your_api_key"

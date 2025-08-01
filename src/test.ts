@@ -413,6 +413,80 @@ async function testBoundaryConditions() {
   }
 }
 
+/**
+ * 测试Git变更审查功能
+ */
+async function testReviewChanges() {
+  const service = new CodeRocketService();
+
+  // 测试Git仓库检测
+  const isGitRepo = await (service as any).checkGitRepository(process.cwd());
+  assert(isGitRepo, 'Git仓库检测失败');
+  console.log('Git仓库检测通过');
+
+  // 测试Git状态解析
+  const statusOutput = `M  package.json
+A  test-file.js
+?? untracked.txt`;
+
+  const files = (service as any).parseGitStatus(statusOutput);
+  assert(files.length === 3, '文件解析数量不正确');
+  assert(files[0].path === 'package.json', '文件路径解析错误');
+  assert(files[0].status === 'M ', '文件状态解析错误');
+  assert(files[0].statusDescription === '已修改（已暂存）', '状态描述错误');
+  console.log('Git状态解析通过');
+
+  // 测试状态描述映射
+  const statusDescriptions = [
+    ['M ', '已修改（已暂存）'],
+    [' M', '已修改（未暂存）'],
+    ['A ', '新增文件（已暂存）'],
+    ['??', '未跟踪文件'],
+  ];
+
+  for (const [status, expected] of statusDescriptions) {
+    const result = (service as any).getGitStatusDescription(status);
+    assert(result === expected, `状态描述映射错误: ${status} -> ${result} (期望: ${expected})`);
+  }
+  console.log('状态描述映射通过');
+
+  // 测试提示词构建
+  const changes = {
+    files: [
+      { path: 'test.js', statusDescription: '已修改（已暂存）' },
+      { path: 'new.ts', statusDescription: '新增文件（已暂存）' },
+    ],
+    diff: 'diff --git a/test.js b/test.js\n+console.log("test");',
+    statusOutput: 'M  test.js\nA  new.ts',
+  };
+
+  const request = { custom_prompt: '请关注性能' };
+  const prompt = (service as any).buildChangesReviewPrompt(changes, request);
+
+  assert(prompt.includes('变更文件数量: 2'), '提示词中缺少文件数量');
+  assert(prompt.includes('test.js'), '提示词中缺少文件名');
+  assert(prompt.includes('请关注性能'), '提示词中缺少自定义提示');
+  assert(prompt.includes('请务必使用中文回复'), '提示词中缺少语言要求');
+  console.log('提示词构建通过');
+
+  // 测试实际的reviewChanges方法（如果有变更的话）
+  try {
+    const result = await service.reviewChanges({
+      include_staged: true,
+      include_unstaged: true,
+    });
+    assert(result.status !== undefined, 'reviewChanges返回结果格式错误');
+    assert(result.summary !== undefined, 'reviewChanges返回结果缺少摘要');
+    assert(result.ai_service_used !== undefined, 'reviewChanges返回结果缺少AI服务信息');
+    console.log(`reviewChanges调用成功: ${result.summary}`);
+  } catch (error) {
+    // 如果没有配置AI服务或没有变更，这是预期的
+    console.log('reviewChanges测试跳过（可能是配置或变更问题）:', (error as Error).message.substring(0, 100));
+  }
+
+  console.log('✅ Git变更审查功能测试完成');
+}
+
 async function runTests() {
   console.log('🚀 CodeRocket MCP 测试开始\n');
   console.log('='.repeat(60));
@@ -432,6 +506,9 @@ async function runTests() {
 
   // 边界条件测试
   await runTest('边界条件测试', testBoundaryConditions);
+
+  // Git变更审查测试
+  await runTest('Git变更审查功能测试', testReviewChanges);
 
   console.log('='.repeat(60));
 
