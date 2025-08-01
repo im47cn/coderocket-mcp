@@ -181,7 +181,7 @@ class CodeRocketMCPServer {
 
   constructor() {
     // 读取实际版本号
-    let version = '1.2.2'; // 默认版本
+    let version = '1.2.3'; // 默认版本
     try {
       const packagePath = resolve(__dirname, '../package.json');
       const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));

@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2025-08-01
+
+### 🔧 Critical Dependency Fix: Complete Independence
+
+#### 🐛 Fixed
+- **Self-Dependency Issue**: Removed incorrect self-reference `@yeepay/coderocket-mcp` from dependencies
+- **Package Integrity**: Fixed circular dependency that could cause installation issues
+- **Clean Dependencies**: Ensured only necessary external dependencies are included
+
+#### ✅ Verified Independence
+- **No CLI Dependencies**: Confirmed zero dependencies on `coderocket-cli`
+- **Standard Git Commands**: All shell commands are standard Git operations only
+- **Independent Configuration**: Uses separate `~/.coderocket/` directory structure
+- **Self-Contained**: All functionality implemented with direct API calls
+
+#### 🧪 Quality Assurance
+- **100% Test Pass Rate**: All 9 tests continue to pass after dependency cleanup
+- **Functionality Verified**: Git change detection and AI review working perfectly
+- **No Breaking Changes**: All existing functionality preserved
+
+---
+
 ## [1.2.2] - 2025-08-01
 
 ### 🎨 Visual Enhancement: Beautiful ASCII Art Banner

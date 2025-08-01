@@ -48,9 +48,9 @@ function getVersion(): string {
     const __dirname = dirname(fileURLToPath(import.meta.url));
     const packagePath = resolve(__dirname, '../package.json');
     const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
-    return packageJson.version || '1.2.2';
+    return packageJson.version || '1.2.3';
   } catch {
-    return '1.2.2'; // Fallback
+    return '1.2.3'; // Fallback
   }
 }
 

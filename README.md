@@ -12,7 +12,6 @@
 
 ## 🚀 核心功能
 
-- **完全独立运行**：无需依赖任何外部CLI工具，开箱即用
 - **多维度代码审查**：支持代码片段、Git提交、文件列表的全面审查
 - **多AI服务支持**：原生集成Gemini、ClaudeCode、OpenCode等AI服务
 - **智能故障转移**：自动切换AI服务，确保审查的可靠性
@@ -38,7 +37,7 @@
 #### 前置要求
 
 1. **Node.js**: >= 18.0.0
-2. **AI服务API密钥**: 至少配置一个AI服务（Gemini、ClaudeCode或OpenCode）
+2. **AI服务API密钥**: 至少配置一个AI服务（Gemini、ClaudeCode）
 
 #### 直接使用（无需安装）
 
@@ -72,8 +71,6 @@ npx -y @yeepay/coderocket-mcp test
 # 4. 启动服务器
 npx -y @yeepay/coderocket-mcp start
 ```
-
-> **注意**: CodeRocket MCP依赖于CodeRocket-CLI，请确保先安装CodeRocket-CLI。
 
 ### 开发者安装
 
@@ -397,7 +394,7 @@ npm test
 
 ## 🤝 贡献
 
-我们欢迎社区贡献！请参考 [CodeRocket-CLI贡献指南](https://github.com/im47cn/coderocket-mcp/blob/main/CONTRIBUTING.md)。
+我们欢迎社区贡献！请参考 [CodeRocket-MCP贡献指南](https://github.com/im47cn/coderocket-mcp/blob/main/CONTRIBUTING.md)。
 
 ### 快速开始
 
