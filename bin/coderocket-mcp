@@ -21,13 +21,13 @@ if (!command || command === 'start') {
   const serverPath = resolve(__dirname, '../dist/index.js');
 
   try {
-    // 动态导入服务器模块并启动
-    import(serverPath).catch((error) => {
-      console.error('❌ CodeRocket MCP 服务器启动失败:', error.message);
-      process.exit(1);
-    });
+    // 使用 await 确保错误能被正确捕获
+    await import(serverPath);
   } catch (error) {
-    console.error('❌ 无法加载 CodeRocket MCP 服务器:', error.message);
+    console.error('❌ CodeRocket MCP 服务器启动失败:', error.message);
+    if (process.env.DEBUG === 'true') {
+      console.error('🔍 详细错误信息:', error);
+    }
     process.exit(1);
   }
 } else {
@@ -100,7 +100,10 @@ CodeRocket MCP - 独立的AI驱动代码审查服务器
         console.log(`CodeRocket MCP v${packageJson.version}`);
         console.log(`独立版本 - 无需 coderocket-cli 依赖`);
       } catch (error) {
-        console.log('CodeRocket MCP v1.0.1 (独立版本)');
+        console.error('⚠️ 无法读取版本信息:', error.message);
+        console.error('📁 尝试的路径:', resolve(__dirname, '../package.json'));
+        console.log('CodeRocket MCP (独立版本)');
+        console.log('💡 运行 "npm view @yeepay/coderocket-mcp version" 查看最新版本');
       }
       break;
 

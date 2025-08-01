@@ -16,6 +16,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated AI service manager to only support Gemini and ClaudeCode
   - Cleaned up documentation and environment variable references
 
+#### 🐛 Critical Bug Fixes
+
+- **Version Display Issue**: Fixed version command always showing hardcoded fallback
+  - Improved error handling in bin/coderocket-mcp version command
+  - Added debugging information when package.json reading fails
+  - Version now correctly displays v1.1.1 from package.json
+
+- **ConfigManager Initialization Error**: Fixed "ConfigManager 未初始化" startup error
+  - Added ConfigManager.initialize() call in MCP server startup
+  - Implemented proper initialization checks in AI service classes
+  - Added intelligent fallback logic for uninitialized ConfigManager
+  - Fixed SmartAIManager to handle delayed configuration loading
+  - Improved error handling with detailed error messages and debug mode
+
+- **Startup Script Error Handling**: Enhanced async/await patterns
+  - Fixed dynamic import error handling in bin/coderocket-mcp
+  - Added proper exit codes for different failure scenarios
+  - Improved TypeScript error handling for unknown error types
+
 #### 🧪 Enhanced Testing
 
 - **Comprehensive Test Coverage**: Added extensive test coverage for core components

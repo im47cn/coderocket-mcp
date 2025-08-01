@@ -183,9 +183,23 @@ class CodeRocketMCPServer {
   }
 
   async run() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    console.error('CodeRocket MCP Server running on stdio');
+    try {
+      // 预先初始化配置系统
+      const { ConfigManager } = await import('./coderocket.js');
+      await ConfigManager.initialize();
+      console.error('✅ CodeRocket MCP 配置系统初始化完成');
+
+      const transport = new StdioServerTransport();
+      await this.server.connect(transport);
+      console.error('🚀 CodeRocket MCP Server running on stdio');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('❌ CodeRocket MCP 服务器启动失败:', errorMessage);
+      if (process.env.DEBUG === 'true') {
+        console.error('🔍 详细错误信息:', error);
+      }
+      process.exit(1);
+    }
   }
 }
 

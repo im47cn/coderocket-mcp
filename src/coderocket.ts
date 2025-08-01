@@ -439,6 +439,11 @@ class GeminiService implements IAIService {
   }
 
   private async initialize(): Promise<void> {
+    // 检查 ConfigManager 是否已初始化
+    if (!(ConfigManager as any).initialized) {
+      return; // 如果未初始化，跳过初始化
+    }
+
     const apiKey = ConfigManager.getAPIKey('gemini');
     if (apiKey) {
       try {
@@ -483,6 +488,10 @@ class GeminiService implements IAIService {
   }
 
   isConfigured(): boolean {
+    // 检查 ConfigManager 是否已初始化
+    if (!(ConfigManager as any).initialized) {
+      return false;
+    }
     return !!ConfigManager.getAPIKey('gemini');
   }
 
@@ -502,6 +511,11 @@ class ClaudeCodeService implements IAIService {
   }
 
   private async initialize(): Promise<void> {
+    // 检查 ConfigManager 是否已初始化
+    if (!(ConfigManager as any).initialized) {
+      return; // 如果未初始化，跳过初始化
+    }
+
     const apiKey = ConfigManager.getAPIKey('claudecode');
     if (apiKey) {
       try {
@@ -556,6 +570,10 @@ class ClaudeCodeService implements IAIService {
   }
 
   isConfigured(): boolean {
+    // 检查 ConfigManager 是否已初始化
+    if (!(ConfigManager as any).initialized) {
+      return false;
+    }
     return !!ConfigManager.getAPIKey('claudecode');
   }
 
@@ -574,6 +592,7 @@ class ClaudeCodeService implements IAIService {
 class SmartAIManager {
   private services: Map<AIService, IAIService> = new Map();
   private serviceOrder: AIService[] = [];
+  private configInitialized: boolean = false;
 
   constructor() {
     this.initializeServices();
@@ -584,11 +603,29 @@ class SmartAIManager {
     this.services.set('gemini', new GeminiService());
     this.services.set('claudecode', new ClaudeCodeService());
 
-    // 设置服务优先级顺序
-    this.updateServiceOrder();
+    // 延迟设置服务优先级顺序，等待 ConfigManager 初始化
+    // this.updateServiceOrder(); // 移到 ensureConfigured 中调用
+  }
+
+  /**
+   * 确保配置已初始化
+   */
+  private ensureConfigInitialized(): void {
+    if (!this.configInitialized) {
+      this.updateServiceOrder();
+      this.configInitialized = true;
+    }
   }
 
   private updateServiceOrder(): void {
+    // 检查 ConfigManager 是否已初始化
+    if (!(ConfigManager as any).initialized) {
+      // 如果未初始化，使用默认顺序
+      this.serviceOrder = ['gemini', 'claudecode'];
+      logger.debug('ConfigManager 未初始化，使用默认服务顺序', { serviceOrder: this.serviceOrder });
+      return;
+    }
+
     const primaryService = ConfigManager.getAIService();
     const allServices: AIService[] = ['gemini', 'claudecode'];
 
@@ -621,6 +658,9 @@ class SmartAIManager {
     prompt: string,
     additionalPrompt?: string
   ): Promise<{ result: string; usedService: AIService }> {
+    // 确保配置已初始化
+    this.ensureConfigInitialized();
+
     // 如果禁用自动切换，只使用指定服务
     if (!ConfigManager.isAutoSwitchEnabled()) {
       const service = this.services.get(primaryService);
@@ -725,6 +765,9 @@ class SmartAIManager {
     configured: boolean;
     available: boolean;
   }> {
+    // 确保配置已初始化
+    this.ensureConfigInitialized();
+
     return Array.from(this.services.entries()).map(([name, service]) => ({
       service: name,
       configured: service.isConfigured(),
