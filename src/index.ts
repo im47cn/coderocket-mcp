@@ -31,7 +31,9 @@ function createJsonSchemas() {
   const schemas: Record<string, any> = {};
 
   for (const toolDef of toolDefinitions) {
-    const schemaName = toolDef.name.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    const schemaName = toolDef.name.replace(/_([a-z])/g, (_, letter) =>
+      letter.toUpperCase(),
+    );
     schemas[schemaName] = zodToJsonSchema(toolDef.schema, {
       name: schemaName,
       $refStrategy: 'none',
@@ -87,7 +89,9 @@ class CodeRocketMCPServer {
           name,
           description,
           inputSchema: zodToJsonSchema(schema, {
-            name: name.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase()),
+            name: name.replace(/_([a-z])/g, (_, letter) =>
+              letter.toUpperCase(),
+            ),
             $refStrategy: 'none',
           }),
         })),
@@ -120,7 +124,8 @@ class CodeRocketMCPServer {
 
           case 'review_changes': {
             const parsedArgs = ReviewChangesRequestSchema.parse(args);
-            const result = await this.codeRocketService.reviewChanges(parsedArgs);
+            const result =
+              await this.codeRocketService.reviewChanges(parsedArgs);
             return {
               content: [
                 {
@@ -219,7 +224,9 @@ class CodeRocketMCPServer {
   async run() {
     try {
       // 预先初始化配置系统
-      const { ConfigManager, CodeRocketService } = await import('./coderocket.js');
+      const { ConfigManager, CodeRocketService } = await import(
+        './coderocket.js'
+      );
       await ConfigManager.initialize();
       showSuccessBanner('配置系统初始化完成');
 
@@ -230,7 +237,8 @@ class CodeRocketMCPServer {
       await this.server.connect(transport);
       showStartupInfo();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error('❌ CodeRocket MCP 服务器启动失败:', errorMessage);
       if (process.env.DEBUG === 'true') {
         console.error('🔍 详细错误信息:', error);

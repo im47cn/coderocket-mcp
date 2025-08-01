@@ -49,7 +49,10 @@ async function runTest(testName: string, testFn: () => Promise<void>) {
     console.log(`✅ ${testName} - 通过\n`);
   } catch (error) {
     testStats.failed++;
-    console.error(`❌ ${testName} - 失败:`, error instanceof Error ? error.message : error);
+    console.error(
+      `❌ ${testName} - 失败:`,
+      error instanceof Error ? error.message : error,
+    );
     console.log('');
   }
 }
@@ -59,7 +62,8 @@ async function testCodeReview() {
   const service = new CodeRocketService();
 
   // 如果没有配置 API 密钥，跳过实际的 API 调用测试
-  const hasApiKey = process.env.GEMINI_API_KEY || process.env.CLAUDECODE_API_KEY;
+  const hasApiKey =
+    process.env.GEMINI_API_KEY || process.env.CLAUDECODE_API_KEY;
 
   if (!hasApiKey) {
     console.log('跳过代码审查测试 - 未配置 API 密钥');
@@ -97,7 +101,10 @@ function multiply(a, b) {
     console.log('摘要:', result.summary.substring(0, 100) + '...');
     console.log('AI服务:', result.ai_service_used);
   } catch (error) {
-    console.log('代码审查测试失败（可能是 API 配置问题）:', (error as Error).message.substring(0, 100) + '...');
+    console.log(
+      '代码审查测试失败（可能是 API 配置问题）:',
+      (error as Error).message.substring(0, 100) + '...',
+    );
   }
 }
 
@@ -109,7 +116,10 @@ async function testServiceStatus() {
   // 断言结果结构
   assert(typeof status === 'object', '状态应该是对象');
   assert(typeof status.current_service === 'string', '当前服务应该是字符串');
-  assert(typeof status.auto_switch_enabled === 'boolean', '自动切换应该是布尔值');
+  assert(
+    typeof status.auto_switch_enabled === 'boolean',
+    '自动切换应该是布尔值',
+  );
   assert(Array.isArray(status.services), '服务列表应该是数组');
   assert(status.services.length > 0, '服务列表不应该为空');
 
@@ -181,43 +191,61 @@ async function testConfigManager() {
 
     // 测试初始化
     await ConfigManager.initialize();
-    assert((ConfigManager as any).initialized === true, 'ConfigManager 应该已初始化');
+    assert(
+      (ConfigManager as any).initialized === true,
+      'ConfigManager 应该已初始化',
+    );
 
     // 测试默认配置
-    assert(ConfigManager.get('AI_SERVICE') === 'gemini', '默认 AI 服务应该是 gemini');
-    assert(ConfigManager.get('AI_AUTO_SWITCH') === 'true', '默认应该启用自动切换');
+    assert(
+      ConfigManager.get('AI_SERVICE') === 'gemini',
+      '默认 AI 服务应该是 gemini',
+    );
+    assert(
+      ConfigManager.get('AI_AUTO_SWITCH') === 'true',
+      '默认应该启用自动切换',
+    );
     assert(ConfigManager.get('AI_TIMEOUT') === '30', '默认超时应该是 30 秒');
 
-  // 测试配置获取
-  const timeout = ConfigManager.getTimeout();
-  assert(typeof timeout === 'number', '超时应该是数字');
-  assert(timeout > 0, '超时应该大于 0');
+    // 测试配置获取
+    const timeout = ConfigManager.getTimeout();
+    assert(typeof timeout === 'number', '超时应该是数字');
+    assert(timeout > 0, '超时应该大于 0');
 
-  // 测试 AI 服务配置
-  const aiService = ConfigManager.getAIService();
-  assert(['gemini', 'claudecode'].includes(aiService), 'AI 服务应该是支持的服务之一');
+    // 测试 AI 服务配置
+    const aiService = ConfigManager.getAIService();
+    assert(
+      ['gemini', 'claudecode'].includes(aiService),
+      'AI 服务应该是支持的服务之一',
+    );
 
-  // 测试自动切换配置
-  const autoSwitch = ConfigManager.isAutoSwitchEnabled();
-  assert(typeof autoSwitch === 'boolean', '自动切换应该是布尔值');
+    // 测试自动切换配置
+    const autoSwitch = ConfigManager.isAutoSwitchEnabled();
+    assert(typeof autoSwitch === 'boolean', '自动切换应该是布尔值');
 
-  // 测试 API 密钥环境变量名
-  const geminiEnvVar = ConfigManager.getAPIKeyEnvVar('gemini');
-  assert(geminiEnvVar === 'GEMINI_API_KEY', 'Gemini API 密钥环境变量名应该正确');
+    // 测试 API 密钥环境变量名
+    const geminiEnvVar = ConfigManager.getAPIKeyEnvVar('gemini');
+    assert(
+      geminiEnvVar === 'GEMINI_API_KEY',
+      'Gemini API 密钥环境变量名应该正确',
+    );
 
-  const claudeEnvVar = ConfigManager.getAPIKeyEnvVar('claudecode');
-  assert(claudeEnvVar === 'CLAUDECODE_API_KEY', 'ClaudeCode API 密钥环境变量名应该正确');
+    const claudeEnvVar = ConfigManager.getAPIKeyEnvVar('claudecode');
+    assert(
+      claudeEnvVar === 'CLAUDECODE_API_KEY',
+      'ClaudeCode API 密钥环境变量名应该正确',
+    );
 
-  // 测试配置路径
-  const projectConfig = ConfigManager.getConfigPath('project');
-  assert(typeof projectConfig.dir === 'string', '项目配置目录应该是字符串');
-  assert(typeof projectConfig.file === 'string', '项目配置文件应该是字符串');
+    // 测试配置路径
+    const projectConfig = ConfigManager.getConfigPath('project');
+    assert(typeof projectConfig.dir === 'string', '项目配置目录应该是字符串');
+    assert(typeof projectConfig.file === 'string', '项目配置文件应该是字符串');
 
-  const globalConfig = ConfigManager.getConfigPath('global');
-  assert(typeof globalConfig.dir === 'string', '全局配置目录应该是字符串');
-  assert(typeof globalConfig.file === 'string', '全局配置文件应该是字符串');
+    const globalConfig = ConfigManager.getConfigPath('global');
+    assert(typeof globalConfig.dir === 'string', '全局配置目录应该是字符串');
+    assert(typeof globalConfig.file === 'string', '全局配置文件应该是字符串');
 
-  console.log('ConfigManager 核心功能测试通过');
+    console.log('ConfigManager 核心功能测试通过');
   } finally {
     // 恢复 .env 文件
     if (envFileBackup !== null) {
@@ -237,21 +265,27 @@ async function testConfigManager() {
  */
 async function testPromptManager() {
   // 导入 PromptManager（需要从 coderocket.js 中导出）
-  const { PromptManager } = await import('./coderocket.js') as any;
+  const { PromptManager } = (await import('./coderocket.js')) as any;
 
   // 测试统一提示词加载
-  const defaultPrompt = await PromptManager.loadPrompt('git-commit-review-prompt');
+  const defaultPrompt = await PromptManager.loadPrompt(
+    'git-commit-review-prompt',
+  );
   assert(typeof defaultPrompt === 'string', '默认提示词应该是字符串');
   assert(defaultPrompt.length > 0, '默认提示词不应该为空');
   assert(defaultPrompt.includes('审阅专家'), '默认提示词应该包含相关内容');
 
   // 测试缓存机制
-  const cachedPrompt = await PromptManager.loadPrompt('git-commit-review-prompt');
+  const cachedPrompt = await PromptManager.loadPrompt(
+    'git-commit-review-prompt',
+  );
   assert(cachedPrompt === defaultPrompt, '缓存的提示词应该相同');
 
   // 测试清除缓存
   PromptManager.clearCache();
-  const reloadedPrompt = await PromptManager.loadPrompt('git-commit-review-prompt');
+  const reloadedPrompt = await PromptManager.loadPrompt(
+    'git-commit-review-prompt',
+  );
   assert(reloadedPrompt === defaultPrompt, '重新加载的提示词应该相同');
 
   // 测试不存在的提示词（应该返回默认提示词）
@@ -266,7 +300,9 @@ async function testPromptManager() {
   assert(typeof gitPrompt === 'string', 'Git 提示词应该是字符串');
 
   // 测试统一提示词：所有审查功能都应该使用同一个提示词
-  const codeReviewPrompt = await PromptManager.loadPrompt('git-commit-review-prompt');
+  const codeReviewPrompt = await PromptManager.loadPrompt(
+    'git-commit-review-prompt',
+  );
   assert(codeReviewPrompt === gitPrompt, '所有审查功能应该使用统一的提示词');
 
   console.log('PromptManager 功能测试通过');
@@ -277,32 +313,50 @@ async function testPromptManager() {
  */
 async function testUnifiedPromptUsage() {
   // 导入 PromptManager 和内部方法
-  const { PromptManager } = await import('./coderocket.js') as any;
+  const { PromptManager } = (await import('./coderocket.js')) as any;
 
   // 清除缓存以确保测试的准确性
   PromptManager.clearCache();
 
   // 直接测试内置默认提示词（避免受外部文件影响）
-  const defaultPrompt = (PromptManager as any).getDefaultPrompt('git-commit-review-prompt');
+  const defaultPrompt = (PromptManager as any).getDefaultPrompt(
+    'git-commit-review-prompt',
+  );
 
   // 验证内置默认提示词内容包含关键特征
   assert(typeof defaultPrompt === 'string', '内置默认提示词应该是字符串');
   assert(defaultPrompt.length > 0, '内置默认提示词不应该为空');
-  assert(defaultPrompt.includes('审阅专家'), '内置默认提示词应该包含审阅专家角色定义');
-  assert(defaultPrompt.includes('自主执行模式'), '内置默认提示词应该包含执行模式说明');
+  assert(
+    defaultPrompt.includes('审阅专家'),
+    '内置默认提示词应该包含审阅专家角色定义',
+  );
+  assert(
+    defaultPrompt.includes('自主执行模式'),
+    '内置默认提示词应该包含执行模式说明',
+  );
   assert(defaultPrompt.includes('审阅维度'), '内置默认提示词应该包含审阅维度');
-  assert(defaultPrompt.includes('功能完整性'), '内置默认提示词应该包含功能完整性检查');
-  assert(defaultPrompt.includes('代码质量'), '内置默认提示词应该包含代码质量检查');
+  assert(
+    defaultPrompt.includes('功能完整性'),
+    '内置默认提示词应该包含功能完整性检查',
+  );
+  assert(
+    defaultPrompt.includes('代码质量'),
+    '内置默认提示词应该包含代码质量检查',
+  );
   assert(defaultPrompt.includes('安全性'), '内置默认提示词应该包含安全性检查');
   assert(defaultPrompt.includes('中文表达'), '内置默认提示词应该要求中文表达');
 
   // 测试不存在的提示词返回默认内容
-  const unknownPrompt = (PromptManager as any).getDefaultPrompt('unknown-prompt');
+  const unknownPrompt = (PromptManager as any).getDefaultPrompt(
+    'unknown-prompt',
+  );
   assert(typeof unknownPrompt === 'string', '未知提示词应该返回默认提示词');
   assert(unknownPrompt.includes('默认提示词'), '未知提示词应该返回默认内容');
 
   // 测试统一性：所有审查功能都应该使用同一个提示词名称
-  const gitCommitPrompt = (PromptManager as any).getDefaultPrompt('git-commit-review-prompt');
+  const gitCommitPrompt = (PromptManager as any).getDefaultPrompt(
+    'git-commit-review-prompt',
+  );
   assert(gitCommitPrompt === defaultPrompt, '所有审查功能应该使用统一的提示词');
 
   console.log('统一提示词使用测试通过');
@@ -319,7 +373,10 @@ async function testAIServiceFailover() {
   const status = await service.getAIServiceStatus();
   assert(typeof status === 'object', '服务状态应该是对象');
   assert(Array.isArray(status.services), '服务列表应该是数组');
-  assert(status.services.length === 2, '应该有 2 个 AI 服务（移除 OpenCode 后）');
+  assert(
+    status.services.length === 2,
+    '应该有 2 个 AI 服务（移除 OpenCode 后）',
+  );
 
   // 验证服务列表包含正确的服务
   const serviceNames = status.services.map(s => s.service);
@@ -331,16 +388,27 @@ async function testAIServiceFailover() {
     assert(typeof svc.service === 'string', '服务名应该是字符串');
     assert(typeof svc.available === 'boolean', '可用性应该是布尔值');
     assert(typeof svc.configured === 'boolean', '配置状态应该是布尔值');
-    assert(['gemini', 'claudecode'].includes(svc.service), '服务名应该是支持的服务');
+    assert(
+      ['gemini', 'claudecode'].includes(svc.service),
+      '服务名应该是支持的服务',
+    );
   });
 
   // 测试当前服务配置
-  assert(['gemini', 'claudecode'].includes(status.current_service), '当前服务应该是支持的服务');
-  assert(typeof status.auto_switch_enabled === 'boolean', '自动切换状态应该是布尔值');
+  assert(
+    ['gemini', 'claudecode'].includes(status.current_service),
+    '当前服务应该是支持的服务',
+  );
+  assert(
+    typeof status.auto_switch_enabled === 'boolean',
+    '自动切换状态应该是布尔值',
+  );
 
   console.log('AI 服务故障转移机制测试通过');
   console.log(`当前服务: ${status.current_service}`);
-  console.log(`可用服务数: ${status.services.filter(s => s.available).length}/${status.services.length}`);
+  console.log(
+    `可用服务数: ${status.services.filter(s => s.available).length}/${status.services.length}`,
+  );
 }
 
 /**
@@ -361,7 +429,10 @@ async function testErrorScenarios() {
     console.log('空代码测试：系统正常处理空代码输入');
   } catch (error) {
     assert(error instanceof Error, '应该抛出Error对象');
-    console.log('空代码测试正确抛出错误:', (error as Error).message.substring(0, 50) + '...');
+    console.log(
+      '空代码测试正确抛出错误:',
+      (error as Error).message.substring(0, 50) + '...',
+    );
   }
 
   // 测试无效的AI服务配置
@@ -374,7 +445,10 @@ async function testErrorScenarios() {
     console.log('无效服务测试：系统正常处理无效服务配置');
   } catch (error) {
     assert(error instanceof Error, '应该抛出Error对象');
-    console.log('无效服务测试正确抛出错误:', (error as Error).message.substring(0, 50) + '...');
+    console.log(
+      '无效服务测试正确抛出错误:',
+      (error as Error).message.substring(0, 50) + '...',
+    );
   }
 
   // 测试未初始化的 ConfigManager
@@ -384,7 +458,10 @@ async function testErrorScenarios() {
     throw new Error('应该抛出未初始化错误');
   } catch (error) {
     assert(error instanceof Error, '应该抛出Error对象');
-    assert((error as Error).message.includes('未初始化'), '错误信息应该包含未初始化提示');
+    assert(
+      (error as Error).message.includes('未初始化'),
+      '错误信息应该包含未初始化提示',
+    );
     console.log('未初始化测试正确抛出错误');
   } finally {
     // 恢复初始化状态
@@ -402,7 +479,10 @@ async function testErrorScenarios() {
     assert(typeof result === 'object', '应该返回审查结果对象');
     console.log('无效语言测试：系统正常处理无效语言类型');
   } catch (error) {
-    console.log('无效语言测试抛出错误（可能是预期行为）:', (error as Error).message.substring(0, 50) + '...');
+    console.log(
+      '无效语言测试抛出错误（可能是预期行为）:',
+      (error as Error).message.substring(0, 50) + '...',
+    );
   }
 }
 
@@ -414,7 +494,8 @@ async function testBoundaryConditions() {
   const service = new CodeRocketService();
 
   // 如果没有配置 API 密钥，跳过实际的 API 调用测试
-  const hasApiKey = process.env.GEMINI_API_KEY || process.env.CLAUDECODE_API_KEY;
+  const hasApiKey =
+    process.env.GEMINI_API_KEY || process.env.CLAUDECODE_API_KEY;
 
   if (!hasApiKey) {
     console.log('跳过边界条件测试 - 未配置 API 密钥');
@@ -445,10 +526,16 @@ async function testBoundaryConditions() {
       context: '特殊字符测试',
     });
 
-    assert(typeof specialResult.summary === 'string', '特殊字符代码应该返回有效结果');
+    assert(
+      typeof specialResult.summary === 'string',
+      '特殊字符代码应该返回有效结果',
+    );
     console.log('特殊字符测试通过');
   } catch (error) {
-    console.log('边界条件测试失败（可能是 API 配置问题）:', (error as Error).message.substring(0, 100) + '...');
+    console.log(
+      '边界条件测试失败（可能是 API 配置问题）:',
+      (error as Error).message.substring(0, 100) + '...',
+    );
   }
 }
 
@@ -485,7 +572,10 @@ A  test-file.js
 
   for (const [status, expected] of statusDescriptions) {
     const result = (service as any).getGitStatusDescription(status);
-    assert(result === expected, `状态描述映射错误: ${status} -> ${result} (期望: ${expected})`);
+    assert(
+      result === expected,
+      `状态描述映射错误: ${status} -> ${result} (期望: ${expected})`,
+    );
   }
   console.log('状态描述映射通过');
 
@@ -516,11 +606,17 @@ A  test-file.js
     });
     assert(result.status !== undefined, 'reviewChanges返回结果格式错误');
     assert(result.summary !== undefined, 'reviewChanges返回结果缺少摘要');
-    assert(result.ai_service_used !== undefined, 'reviewChanges返回结果缺少AI服务信息');
+    assert(
+      result.ai_service_used !== undefined,
+      'reviewChanges返回结果缺少AI服务信息',
+    );
     console.log(`reviewChanges调用成功: ${result.summary}`);
   } catch (error) {
     // 如果没有配置AI服务或没有变更，这是预期的
-    console.log('reviewChanges测试跳过（可能是配置或变更问题）:', (error as Error).message.substring(0, 100));
+    console.log(
+      'reviewChanges测试跳过（可能是配置或变更问题）:',
+      (error as Error).message.substring(0, 100),
+    );
   }
 
   console.log('✅ Git变更审查功能测试完成');
@@ -557,7 +653,9 @@ async function runTests() {
   console.log(`  总计: ${testStats.total}`);
   console.log(`  通过: ${testStats.passed} ✅`);
   console.log(`  失败: ${testStats.failed} ❌`);
-  console.log(`  成功率: ${((testStats.passed / testStats.total) * 100).toFixed(1)}%`);
+  console.log(
+    `  成功率: ${((testStats.passed / testStats.total) * 100).toFixed(1)}%`,
+  );
 
   if (testStats.failed > 0) {
     console.log('\n⚠️  有测试失败，请检查上述错误信息');

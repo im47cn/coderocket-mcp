@@ -24,11 +24,22 @@ export type ReviewCodeRequest = z.infer<typeof ReviewCodeRequestSchema>;
 
 // Git变更审查请求（新的自动化方式）
 export const ReviewChangesRequestSchema = z.object({
-  repository_path: z.string().optional().describe('Git仓库路径（可选，默认为当前目录）'),
+  repository_path: z
+    .string()
+    .optional()
+    .describe('Git仓库路径（可选，默认为当前目录）'),
   ai_service: AIServiceSchema.optional().describe('指定使用的AI服务（可选）'),
   custom_prompt: z.string().optional().describe('自定义审查提示词（可选）'),
-  include_staged: z.boolean().optional().default(true).describe('是否包含已暂存的变更'),
-  include_unstaged: z.boolean().optional().default(true).describe('是否包含未暂存的变更'),
+  include_staged: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('是否包含已暂存的变更'),
+  include_unstaged: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('是否包含未暂存的变更'),
 });
 export type ReviewChangesRequest = z.infer<typeof ReviewChangesRequestSchema>;
 
@@ -64,7 +75,10 @@ export const ConfigureAIServiceRequestSchema = z.object({
   service: AIServiceSchema.describe('要配置的AI服务'),
   scope: ConfigScopeSchema.optional().default('project').describe('配置范围'),
   api_key: z.string().optional().describe('API密钥（可选）'),
-  language: z.string().optional().describe('AI服务语言设置（如：zh-CN, en-US）'),
+  language: z
+    .string()
+    .optional()
+    .describe('AI服务语言设置（如：zh-CN, en-US）'),
   timeout: z.number().optional().describe('超时时间（秒）'),
   max_retries: z.number().optional().describe('最大重试次数'),
 });

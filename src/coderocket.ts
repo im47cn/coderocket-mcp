@@ -109,9 +109,15 @@ export class ConfigManager {
    */
   private static loadEnvironmentVariables(): void {
     const envKeys = [
-      'AI_SERVICE', 'AI_AUTO_SWITCH', 'AI_TIMEOUT', 'AI_MAX_RETRIES', 'AI_RETRY_DELAY',
-      'GEMINI_API_KEY', 'CLAUDECODE_API_KEY',
-      'NODE_ENV', 'DEBUG'
+      'AI_SERVICE',
+      'AI_AUTO_SWITCH',
+      'AI_TIMEOUT',
+      'AI_MAX_RETRIES',
+      'AI_RETRY_DELAY',
+      'GEMINI_API_KEY',
+      'CLAUDECODE_API_KEY',
+      'NODE_ENV',
+      'DEBUG',
     ];
 
     envKeys.forEach(key => {
@@ -229,13 +235,11 @@ export class ConfigManager {
    * 获取配置文件路径（保持向后兼容）
    */
   static getConfigPath(scope: string): { dir: string; file: string } {
-    const configDir = scope === 'global'
-      ? join(homedir(), '.coderocket')
-      : process.cwd();
+    const configDir =
+      scope === 'global' ? join(homedir(), '.coderocket') : process.cwd();
 
-    const configFile = scope === 'global'
-      ? join(configDir, 'env')
-      : join(configDir, '.env');
+    const configFile =
+      scope === 'global' ? join(configDir, 'env') : join(configDir, '.env');
 
     return { dir: configDir, file: configFile };
   }
@@ -271,7 +275,12 @@ export class PromptManager {
     } catch (error) {
       // 项目级提示词不存在，尝试全局提示词
       try {
-        const globalPromptPath = join(homedir(), '.coderocket', 'prompts', `${name}.md`);
+        const globalPromptPath = join(
+          homedir(),
+          '.coderocket',
+          'prompts',
+          `${name}.md`,
+        );
         promptContent = await readFile(globalPromptPath, 'utf-8');
         logger.debug('全局提示词加载成功', { path: globalPromptPath });
       } catch (globalError) {
@@ -350,10 +359,12 @@ export class PromptManager {
 
 请确保审阅报告专业、准确、可操作。
 
-**重要：请务必使用中文回复，所有审查结果、建议和评价都必须用中文表达。**`
+**重要：请务必使用中文回复，所有审查结果、建议和评价都必须用中文表达。**`,
     };
 
-    return defaultPrompts[name] || `# 默认提示词\n\n请提供专业的代码审查和分析。`;
+    return (
+      defaultPrompts[name] || `# 默认提示词\n\n请提供专业的代码审查和分析。`
+    );
   }
 
   /**
@@ -367,14 +378,14 @@ export class PromptManager {
    * 预加载常用提示词
    */
   static async preloadCommonPrompts(): Promise<void> {
-    const commonPrompts = [
-      'git-commit-review-prompt'
-    ];
+    const commonPrompts = ['git-commit-review-prompt'];
 
     await Promise.all(
-      commonPrompts.map(name => this.loadPrompt(name).catch(error => {
-        logger.warn(`预加载提示词失败: ${name}`, error);
-      }))
+      commonPrompts.map(name =>
+        this.loadPrompt(name).catch(error => {
+          logger.warn(`预加载提示词失败: ${name}`, error);
+        }),
+      ),
     );
   }
 }
@@ -402,17 +413,24 @@ class GeminiService implements IAIService {
   private async initialize(): Promise<void> {
     // 检查 ConfigManager 是否已初始化
     if (!(ConfigManager as any).initialized) {
-      throw new Error('ConfigManager 未初始化，请先调用 ConfigManager.initialize()');
+      throw new Error(
+        'ConfigManager 未初始化，请先调用 ConfigManager.initialize()',
+      );
     }
 
     const apiKey = ConfigManager.getAPIKey('gemini');
     if (apiKey) {
       try {
         this.client = new GoogleGenerativeAI(apiKey);
-        this.model = this.client.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        this.model = this.client.getGenerativeModel({
+          model: 'gemini-1.5-flash',
+        });
         logger.debug('Gemini 服务初始化成功');
       } catch (error) {
-        logger.error('Gemini 服务初始化失败', error instanceof Error ? error : new Error(String(error)));
+        logger.error(
+          'Gemini 服务初始化失败',
+          error instanceof Error ? error : new Error(String(error)),
+        );
       }
     }
   }
@@ -426,7 +444,9 @@ class GeminiService implements IAIService {
     }
 
     try {
-      const fullPrompt = additionalPrompt ? `${prompt}\n\n${additionalPrompt}` : prompt;
+      const fullPrompt = additionalPrompt
+        ? `${prompt}\n\n${additionalPrompt}`
+        : prompt;
 
       const result = await this.model.generateContent(fullPrompt);
       const response = await result.response;
@@ -438,13 +458,18 @@ class GeminiService implements IAIService {
 
       logger.debug('Gemini API 调用成功', {
         promptLength: fullPrompt.length,
-        responseLength: text.length
+        responseLength: text.length,
       });
 
       return text.trim();
     } catch (error) {
-      logger.error('Gemini API 调用失败', error instanceof Error ? error : new Error(String(error)));
-      throw new Error(`Gemini API 调用失败: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(
+        'Gemini API 调用失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      throw new Error(
+        `Gemini API 调用失败: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -485,7 +510,10 @@ class ClaudeCodeService implements IAIService {
         });
         logger.debug('ClaudeCode 服务初始化成功');
       } catch (error) {
-        logger.error('ClaudeCode 服务初始化失败', error instanceof Error ? error : new Error(String(error)));
+        logger.error(
+          'ClaudeCode 服务初始化失败',
+          error instanceof Error ? error : new Error(String(error)),
+        );
       }
     }
   }
@@ -499,7 +527,9 @@ class ClaudeCodeService implements IAIService {
     }
 
     try {
-      const fullPrompt = additionalPrompt ? `${prompt}\n\n${additionalPrompt}` : prompt;
+      const fullPrompt = additionalPrompt
+        ? `${prompt}\n\n${additionalPrompt}`
+        : prompt;
 
       const message = await this.client.messages.create({
         model: 'claude-3-sonnet-20240229',
@@ -507,12 +537,13 @@ class ClaudeCodeService implements IAIService {
         messages: [
           {
             role: 'user',
-            content: fullPrompt
-          }
-        ]
+            content: fullPrompt,
+          },
+        ],
       });
 
-      const text = message.content[0]?.type === 'text' ? message.content[0].text : '';
+      const text =
+        message.content[0]?.type === 'text' ? message.content[0].text : '';
 
       if (!text || text.trim().length === 0) {
         throw new Error('ClaudeCode 返回空响应');
@@ -520,13 +551,18 @@ class ClaudeCodeService implements IAIService {
 
       logger.debug('ClaudeCode API 调用成功', {
         promptLength: fullPrompt.length,
-        responseLength: text.length
+        responseLength: text.length,
       });
 
       return text.trim();
     } catch (error) {
-      logger.error('ClaudeCode API 调用失败', error instanceof Error ? error : new Error(String(error)));
-      throw new Error(`ClaudeCode API 调用失败: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(
+        'ClaudeCode API 调用失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      throw new Error(
+        `ClaudeCode API 调用失败: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -542,8 +578,6 @@ class ClaudeCodeService implements IAIService {
     return 'claudecode';
   }
 }
-
-
 
 /**
  * 智能 AI 服务管理器
@@ -583,7 +617,9 @@ class SmartAIManager {
     if (!(ConfigManager as any).initialized) {
       // 如果未初始化，使用默认顺序
       this.serviceOrder = ['gemini', 'claudecode'];
-      logger.debug('ConfigManager 未初始化，使用默认服务顺序', { serviceOrder: this.serviceOrder });
+      logger.debug('ConfigManager 未初始化，使用默认服务顺序', {
+        serviceOrder: this.serviceOrder,
+      });
       return;
     }
 
@@ -617,7 +653,7 @@ class SmartAIManager {
   async intelligentCall(
     primaryService: AIService,
     prompt: string,
-    additionalPrompt?: string
+    additionalPrompt?: string,
   ): Promise<{ result: string; usedService: AIService }> {
     // 确保配置已初始化
     this.ensureConfigInitialized();
@@ -641,7 +677,7 @@ class SmartAIManager {
     logger.info('开始智能AI调用', {
       primaryService,
       tryOrder,
-      autoSwitch: true
+      autoSwitch: true,
     });
 
     for (const serviceName of tryOrder) {
@@ -666,14 +702,16 @@ class SmartAIManager {
           logger.info(`AI调用成功`, {
             service: serviceName,
             attempt,
-            resultLength: result.length
+            resultLength: result.length,
           });
 
           return { result, usedService: serviceName };
-
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          logger.warn(`${serviceName} 调用失败 (第${attempt}次)`, { error: errorMessage });
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          logger.warn(`${serviceName} 调用失败 (第${attempt}次)`, {
+            error: errorMessage,
+          });
 
           errors.push({ service: serviceName, error: errorMessage });
 
@@ -689,7 +727,9 @@ class SmartAIManager {
 
     // 所有服务都失败了
     const errorSummary = errors.map(e => `${e.service}: ${e.error}`).join('; ');
-    logger.error('所有AI服务调用失败', new Error('所有AI服务调用失败'), { errors });
+    logger.error('所有AI服务调用失败', new Error('所有AI服务调用失败'), {
+      errors,
+    });
 
     throw new Error(`所有AI服务都不可用。错误详情: ${errorSummary}`);
   }
@@ -776,7 +816,7 @@ export class CodeRocketService {
   private async executeAIReview(
     aiService: AIService,
     promptName: string,
-    additionalPrompt: string
+    additionalPrompt: string,
   ): Promise<ReviewResult> {
     try {
       // 加载提示词
@@ -786,9 +826,10 @@ export class CodeRocketService {
       const language = ConfigManager.getAILanguage();
 
       // 添加语言要求到提示词
-      const languageInstruction = language === 'zh-CN'
-        ? '\n\n**重要：请务必使用中文回复，所有审查结果、建议和评价都必须用中文表达。**'
-        : '\n\n**Important: Please respond in English.**';
+      const languageInstruction =
+        language === 'zh-CN'
+          ? '\n\n**重要：请务必使用中文回复，所有审查结果、建议和评价都必须用中文表达。**'
+          : '\n\n**Important: Please respond in English.**';
 
       const enhancedPrompt = promptContent + languageInstruction;
 
@@ -796,17 +837,19 @@ export class CodeRocketService {
       const { result, usedService } = await this.aiManager.intelligentCall(
         aiService,
         enhancedPrompt,
-        additionalPrompt
+        additionalPrompt,
       );
 
       // 解析审查结果
       return this.parseReviewResult(result, usedService);
     } catch (error) {
-      logger.error('AI审查执行失败', error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        'AI审查执行失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
       throw errorHandler.handleError(error, 'executeAIReview');
     }
   }
-
 
   /**
    * 解析审查结果
@@ -823,16 +866,32 @@ export class CodeRocketService {
     // 尝试从输出中提取状态
     for (const line of lines) {
       const lowerLine = line.toLowerCase();
-      if (line.includes('✅') || lowerLine.includes('通过') || lowerLine.includes('优秀')) {
+      if (
+        line.includes('✅') ||
+        lowerLine.includes('通过') ||
+        lowerLine.includes('优秀')
+      ) {
         status = '✅';
         break;
-      } else if (line.includes('⚠️') || lowerLine.includes('警告') || lowerLine.includes('需改进')) {
+      } else if (
+        line.includes('⚠️') ||
+        lowerLine.includes('警告') ||
+        lowerLine.includes('需改进')
+      ) {
         status = '⚠️';
         break;
-      } else if (line.includes('❌') || lowerLine.includes('失败') || lowerLine.includes('有问题')) {
+      } else if (
+        line.includes('❌') ||
+        lowerLine.includes('失败') ||
+        lowerLine.includes('有问题')
+      ) {
         status = '❌';
         break;
-      } else if (line.includes('🔍') || lowerLine.includes('调查') || lowerLine.includes('需调查')) {
+      } else if (
+        line.includes('🔍') ||
+        lowerLine.includes('调查') ||
+        lowerLine.includes('需调查')
+      ) {
         status = '🔍';
         break;
       }
@@ -844,7 +903,11 @@ export class CodeRocketService {
       // 寻找总体评价或摘要部分
       let summaryLine = nonEmptyLines[0];
       for (const line of nonEmptyLines) {
-        if (line.includes('总体评价') || line.includes('审查摘要') || line.includes('摘要')) {
+        if (
+          line.includes('总体评价') ||
+          line.includes('审查摘要') ||
+          line.includes('摘要')
+        ) {
           const nextIndex = nonEmptyLines.indexOf(line) + 1;
           if (nextIndex < nonEmptyLines.length) {
             summaryLine = nonEmptyLines[nextIndex];
@@ -853,7 +916,8 @@ export class CodeRocketService {
         }
       }
 
-      summary = summaryLine.substring(0, 200) + (summaryLine.length > 200 ? '...' : '');
+      summary =
+        summaryLine.substring(0, 200) + (summaryLine.length > 200 ? '...' : '');
     }
 
     return {
@@ -901,7 +965,11 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || ConfigManager.getAIService();
-      const result = await this.executeAIReview(aiService, 'git-commit-review-prompt', reviewPrompt);
+      const result = await this.executeAIReview(
+        aiService,
+        'git-commit-review-prompt',
+        reviewPrompt,
+      );
 
       logger.info('代码审查完成', {
         status: result.status,
@@ -910,7 +978,10 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
 
       return result;
     } catch (error) {
-      logger.error('代码审查失败', error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        '代码审查失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
       throw errorHandler.handleError(error, 'reviewCode');
     }
   }
@@ -954,7 +1025,11 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || ConfigManager.getAIService();
-      const result = await this.executeAIReview(aiService, 'git-commit-review-prompt', reviewPrompt);
+      const result = await this.executeAIReview(
+        aiService,
+        'git-commit-review-prompt',
+        reviewPrompt,
+      );
 
       logger.info('Git变更审查完成', {
         status: result.status,
@@ -964,7 +1039,10 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
 
       return result;
     } catch (error) {
-      logger.error('Git变更审查失败', error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        'Git变更审查失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
       throw errorHandler.handleError(error, 'reviewChanges');
     }
   }
@@ -986,7 +1064,10 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
   /**
    * 获取Git变更信息
    */
-  private async getGitChanges(repositoryPath: string, request: ReviewChangesRequest) {
+  private async getGitChanges(
+    repositoryPath: string,
+    request: ReviewChangesRequest,
+  ) {
     const includeStaged = request.include_staged !== false;
     const includeUnstaged = request.include_unstaged !== false;
 
@@ -1001,9 +1082,12 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
 
     try {
       // 获取变更的文件列表
-      const { stdout: statusOutput } = await execAsync('git status --porcelain', {
-        cwd: repositoryPath,
-      });
+      const { stdout: statusOutput } = await execAsync(
+        'git status --porcelain',
+        {
+          cwd: repositoryPath,
+        },
+      );
 
       // 获取详细的diff信息
       const { stdout: diffOutput } = await execAsync(diffCommand, {
@@ -1020,8 +1104,13 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
         statusOutput,
       };
     } catch (error) {
-      logger.error('获取Git变更信息失败', error instanceof Error ? error : new Error(String(error)));
-      throw new Error(`无法获取Git变更信息: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(
+        '获取Git变更信息失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      throw new Error(
+        `无法获取Git变更信息: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -1035,7 +1124,10 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
       statusDescription: string;
     }> = [];
 
-    const lines = statusOutput.trim().split('\n').filter(line => line.length > 0);
+    const lines = statusOutput
+      .trim()
+      .split('\n')
+      .filter(line => line.length > 0);
 
     for (const line of lines) {
       if (line.length < 3) continue;
@@ -1062,7 +1154,7 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
     const statusMap: Record<string, string> = {
       'M ': '已修改（已暂存）',
       ' M': '已修改（未暂存）',
-      'MM': '已修改（部分暂存）',
+      MM: '已修改（部分暂存）',
       'A ': '新增文件（已暂存）',
       ' A': '新增文件（未暂存）',
       'D ': '已删除（已暂存）',
@@ -1081,10 +1173,13 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
   /**
    * 构建变更审查提示词
    */
-  private buildChangesReviewPrompt(changes: any, request: ReviewChangesRequest): string {
-    const filesList = changes.files.map((file: any) =>
-      `- ${file.path} (${file.statusDescription})`
-    ).join('\n');
+  private buildChangesReviewPrompt(
+    changes: any,
+    request: ReviewChangesRequest,
+  ): string {
+    const filesList = changes.files
+      .map((file: any) => `- ${file.path} (${file.statusDescription})`)
+      .join('\n');
 
     return `请审查以下Git变更：
 
@@ -1158,10 +1253,13 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
 
       // 获取提交信息
       const commitHash = request.commit_hash || 'HEAD';
-      const { stdout: commitInfo } = await execAsync(`git --no-pager show ${commitHash}`, {
-        cwd: repoPath,
-        timeout: 30000,
-      });
+      const { stdout: commitInfo } = await execAsync(
+        `git --no-pager show ${commitHash}`,
+        {
+          cwd: repoPath,
+          timeout: 30000,
+        },
+      );
 
       if (!commitInfo.trim()) {
         throw new Error(`无法获取提交信息: ${commitHash}`);
@@ -1189,7 +1287,11 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || ConfigManager.getAIService();
-      const result = await this.executeAIReview(aiService, 'git-commit-review-prompt', reviewPrompt);
+      const result = await this.executeAIReview(
+        aiService,
+        'git-commit-review-prompt',
+        reviewPrompt,
+      );
 
       logger.info('Git提交审查完成', {
         status: result.status,
@@ -1198,7 +1300,10 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
 
       return result;
     } catch (error) {
-      logger.error('Git提交审查失败', error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        'Git提交审查失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
       throw errorHandler.handleError(error, 'reviewCommit');
     }
   }
@@ -1243,9 +1348,13 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
             truncatedContent = content;
           }
 
-          fileContents.push(`## 文件: ${filePath}\n\`\`\`\n${truncatedContent}\n\`\`\``);
+          fileContents.push(
+            `## 文件: ${filePath}\n\`\`\`\n${truncatedContent}\n\`\`\``,
+          );
         } catch (error) {
-          fileContents.push(`## 文件: ${filePath}\n**错误**: 无法读取文件 - ${error instanceof Error ? error.message : String(error)}`);
+          fileContents.push(
+            `## 文件: ${filePath}\n**错误**: 无法读取文件 - ${error instanceof Error ? error.message : String(error)}`,
+          );
         }
       }
 
@@ -1269,7 +1378,11 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
 
       // 调用AI服务进行审查
       const aiService = request.ai_service || ConfigManager.getAIService();
-      const result = await this.executeAIReview(aiService, 'git-commit-review-prompt', reviewPrompt);
+      const result = await this.executeAIReview(
+        aiService,
+        'git-commit-review-prompt',
+        reviewPrompt,
+      );
 
       logger.info('文件审查完成', {
         status: result.status,
@@ -1278,7 +1391,10 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
 
       return result;
     } catch (error) {
-      logger.error('文件审查失败', error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        '文件审查失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
       throw errorHandler.handleError(error, 'reviewFiles');
     }
   }
@@ -1313,23 +1429,39 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
       // 设置主要AI服务
       if (request.service) {
         process.env.AI_SERVICE = request.service;
-        await this.saveConfigToFile('AI_SERVICE', request.service, request.scope);
+        await this.saveConfigToFile(
+          'AI_SERVICE',
+          request.service,
+          request.scope,
+        );
       }
 
       // 设置其他配置项
       if (request.language) {
         process.env.AI_LANGUAGE = request.language;
-        await this.saveConfigToFile('AI_LANGUAGE', request.language, request.scope);
+        await this.saveConfigToFile(
+          'AI_LANGUAGE',
+          request.language,
+          request.scope,
+        );
       }
 
       if (request.timeout) {
         process.env.AI_TIMEOUT = request.timeout.toString();
-        await this.saveConfigToFile('AI_TIMEOUT', request.timeout.toString(), request.scope);
+        await this.saveConfigToFile(
+          'AI_TIMEOUT',
+          request.timeout.toString(),
+          request.scope,
+        );
       }
 
       if (request.max_retries) {
         process.env.AI_MAX_RETRIES = request.max_retries.toString();
-        await this.saveConfigToFile('AI_MAX_RETRIES', request.max_retries.toString(), request.scope);
+        await this.saveConfigToFile(
+          'AI_MAX_RETRIES',
+          request.max_retries.toString(),
+          request.scope,
+        );
       }
 
       logger.info('AI服务配置完成', {
@@ -1351,11 +1483,13 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
         },
       };
     } catch (error) {
-      logger.error('AI服务配置失败', error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        'AI服务配置失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
       throw errorHandler.handleError(error, 'configureAIService');
     }
   }
-
 
   /**
    * 保存配置项到文件
@@ -1382,7 +1516,7 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
       // 更新或添加配置行
       const lines = existingConfig.split('\n');
       const existingLineIndex = lines.findIndex(line =>
-        line.trim().startsWith(`${key}=`)
+        line.trim().startsWith(`${key}=`),
       );
 
       const configLine = `${key}=${value}`;
@@ -1397,7 +1531,11 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
 
       logger.debug('配置已保存', { key, configFile, scope });
     } catch (error) {
-      logger.error('保存配置失败', error instanceof Error ? error : new Error(String(error)), { key, configFile });
+      logger.error(
+        '保存配置失败',
+        error instanceof Error ? error : new Error(String(error)),
+        { key, configFile },
+      );
       throw error;
     }
   }
@@ -1449,7 +1587,10 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
         max_retries: ConfigManager.getMaxRetries(),
       };
     } catch (error) {
-      logger.error('获取AI服务状态失败', error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        '获取AI服务状态失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
       throw errorHandler.handleError(error, 'getAIServiceStatus');
     }
   }
