@@ -23,24 +23,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-/**
- * 自动生成 JSON Schema（从 Zod 类型生成）
- */
-function createJsonSchemas() {
-  const schemas: Record<string, any> = {};
 
-  for (const toolDef of toolDefinitions) {
-    const schemaName = toolDef.name.replace(/_([a-z])/g, (_, letter) =>
-      letter.toUpperCase(),
-    );
-    schemas[schemaName] = zodToJsonSchema(toolDef.schema, {
-      name: schemaName,
-      $refStrategy: 'none',
-    });
-  }
-
-  return schemas;
-}
 
 /**
  * CodeRocket MCP Server
@@ -82,7 +65,6 @@ class CodeRocketMCPServer {
   private setupToolHandlers() {
     // 注册工具列表处理器
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      const schemas = createJsonSchemas();
       return {
         tools: toolDefinitions.map(({ name, description, schema }) => ({
           name,
