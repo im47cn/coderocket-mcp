@@ -404,9 +404,8 @@ npm test
 
 ## 🔗 相关链接
 
-- [CodeRocket-CLI](https://github.com/im47cn/coderocket-cli) - 命令行版本的代码审查工具
 - [Model Context Protocol](https://modelcontextprotocol.io/) - MCP官方文档
-- [问题反馈](https://github.com/im47cn/coderocket-mcp/issues) - 报告问题或建议
+- [问题反馈](https://github.com/im47cn/coderocket/issues) - 报告问题或建议
 - [NPM包](https://www.npmjs.com/package/@yeepay/coderocket-mcp) - NPM官方页面
 
 ## 📊 特性对比

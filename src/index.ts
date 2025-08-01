@@ -383,8 +383,9 @@ class CodeRocketMCPServer {
                   error_code: 'TOOL_EXECUTION_ERROR',
                   suggestions: [
                     '检查输入参数是否正确',
-                    '确保coderocket-cli已正确安装',
                     '验证AI服务配置是否正确',
+                    '确保API密钥已正确设置',
+                    '检查网络连接是否正常',
                   ],
                 },
                 null,

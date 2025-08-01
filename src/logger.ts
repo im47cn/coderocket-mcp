@@ -210,8 +210,8 @@ export class ErrorHandler {
     if (error.message.includes('Shell command failed')) {
       errorCode = 'SHELL_COMMAND_ERROR';
       userSuggestions = [
-        '检查coderocket-cli是否正确安装',
         '验证AI服务是否已配置',
+        '检查API密钥是否正确设置',
         '确保有足够的权限执行命令',
         ...userSuggestions,
       ];
