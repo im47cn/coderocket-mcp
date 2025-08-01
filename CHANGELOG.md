@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2025-08-01
+
+### 🎨 Visual Enhancement: Beautiful ASCII Art Banner
+
+#### ✨ New Features
+- **精美 Banner 显示**: 添加了参考 coderocket-cli 设计的渐变色 ASCII Art Banner
+- **响应式界面**: 根据终端宽度自动选择合适的 Banner 显示（长版本/短版本）
+- **专业级视觉效果**: 蓝绿渐变色彩，提升用户体验和专业感
+- **多场景 Banner**: 支持启动、成功、错误等不同场景的 Banner 显示
+
+#### 🛠️ Technical Improvements
+- **Banner 模块**: 新增 `src/banner.ts` 模块，提供完整的 Banner 显示功能
+- **启动界面优化**: 启动时显示精美的渐变 Banner 和服务信息
+- **版本信息集成**: Banner 中动态显示当前版本号和协议信息
+- **颜色系统**: 完整的 ANSI 颜色代码支持，包括 256 色渐变效果
+
+#### 💫 User Experience
+- **视觉一致性**: 与 coderocket-cli 保持一致的设计风格
+- **信息丰富**: 启动时显示所有可用工具和功能说明
+- **专业外观**: 媲美 Gemini CLI 的高质量界面设计
+- **终端兼容**: 支持不同宽度的终端窗口自适应显示
+
+---
+
 ## [1.2.1] - 2025-08-01
 
 ### 🧪 Testing & Quality Assurance

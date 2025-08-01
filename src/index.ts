@@ -14,6 +14,7 @@ import {
   ReviewFilesRequestSchema,
   ConfigureAIServiceRequestSchema,
 } from './types.js';
+import { showStartupInfo, showSuccessBanner } from './banner.js';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -180,7 +181,7 @@ class CodeRocketMCPServer {
 
   constructor() {
     // 读取实际版本号
-    let version = '1.2.1'; // 默认版本
+    let version = '1.2.2'; // 默认版本
     try {
       const packagePath = resolve(__dirname, '../package.json');
       const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
@@ -478,11 +479,11 @@ class CodeRocketMCPServer {
       // 预先初始化配置系统
       const { ConfigManager } = await import('./coderocket.js');
       await ConfigManager.initialize();
-      console.error('✅ CodeRocket MCP 配置系统初始化完成');
+      showSuccessBanner('配置系统初始化完成');
 
       const transport = new StdioServerTransport();
       await this.server.connect(transport);
-      console.error('🚀 CodeRocket MCP Server running on stdio');
+      showStartupInfo();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('❌ CodeRocket MCP 服务器启动失败:', errorMessage);
