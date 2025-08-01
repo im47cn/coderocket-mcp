@@ -27,6 +27,7 @@
 - [MCP工具](#-mcp工具)
 - [配置说明](#️-配置说明)
 - [使用示例](#-使用示例)
+- [提示词自定义](#-提示词自定义)
 - [故障排除](#-故障排除)
 - [开发指南](#-开发指南)
 
@@ -280,6 +281,43 @@ NODE_ENV=development                 # 开发模式启用详细日志
   "arguments": {}
 }
 ```
+
+## 🎨 提示词自定义
+
+CodeRocket MCP 使用统一的提示词系统，所有代码审查功能都使用同一个提示词模板：
+
+### 统一提示词
+
+- **统一模板**：`git-commit-review-prompt.md` - 适用于所有代码审查场景
+- **功能覆盖**：Git 提交审查、代码片段审查、文件审查、变更审查
+
+### 提示词优先级
+
+1. **项目级提示词**（最高优先级）：`./prompts/git-commit-review-prompt.md`
+2. **全局提示词**：`~/.coderocket/prompts/git-commit-review-prompt.md`
+3. **内置默认提示词**（最低优先级）
+
+### 自定义示例
+
+创建项目级提示词：
+
+```bash
+mkdir -p prompts
+echo "# 自定义代码审查提示词..." > prompts/git-commit-review-prompt.md
+```
+
+创建全局提示词：
+
+```bash
+mkdir -p ~/.coderocket/prompts
+echo "# 全局代码审查提示词..." > ~/.coderocket/prompts/git-commit-review-prompt.md
+```
+
+### 统一性优势
+
+- **一致性**：所有审查功能使用相同的评判标准
+- **维护性**：只需维护一个提示词文件
+- **可预测性**：审查结果风格和格式保持一致
 
 ## 🔍 故障排除
 

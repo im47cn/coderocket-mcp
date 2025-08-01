@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2025-08-01
+
+### ✨ 统一提示词系统
+
+#### Added
+- **统一提示词系统**：所有代码审查功能现在使用统一的 `git-commit-review-prompt.md` 提示词
+- **提示词自定义文档**：添加了完整的提示词自定义指南和使用说明
+- **统一性测试**：新增专门的测试用例验证统一提示词的使用
+
+#### Changed
+- 移除了不再使用的 `code-review-prompt` 提示词，简化了提示词管理
+- 更新了内置默认提示词，适配所有审查场景
+- 优化了 PromptManager 的预加载逻辑，只加载必要的提示词
+
+#### Documentation
+- 更新了 README.md，添加了提示词自定义章节
+- 说明了统一提示词的优势：一致性、维护性、可预测性
+- 提供了项目级和全局级提示词自定义示例
+
 ## [1.2.4] - 2025-08-01
 
 ### 🎨 Enhanced User Experience: Banner Integration
@@ -143,7 +162,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### 🔧 Enhanced
 - **Prompt Enhancement**: All prompts now explicitly request Chinese responses
   - Added language instructions to `git-commit-review-prompt`
-  - Added language instructions to `code-review-prompt`
   - Enhanced `executeAIReview` method to dynamically add language requirements
 
 #### 📝 Configuration Updates

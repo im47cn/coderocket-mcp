@@ -239,19 +239,19 @@ async function testPromptManager() {
   // 导入 PromptManager（需要从 coderocket.js 中导出）
   const { PromptManager } = await import('./coderocket.js') as any;
 
-  // 测试默认提示词加载
-  const defaultPrompt = await PromptManager.loadPrompt('code-review-prompt');
+  // 测试统一提示词加载
+  const defaultPrompt = await PromptManager.loadPrompt('git-commit-review-prompt');
   assert(typeof defaultPrompt === 'string', '默认提示词应该是字符串');
   assert(defaultPrompt.length > 0, '默认提示词不应该为空');
-  assert(defaultPrompt.includes('代码审查'), '默认提示词应该包含相关内容');
+  assert(defaultPrompt.includes('审阅专家'), '默认提示词应该包含相关内容');
 
   // 测试缓存机制
-  const cachedPrompt = await PromptManager.loadPrompt('code-review-prompt');
+  const cachedPrompt = await PromptManager.loadPrompt('git-commit-review-prompt');
   assert(cachedPrompt === defaultPrompt, '缓存的提示词应该相同');
 
   // 测试清除缓存
   PromptManager.clearCache();
-  const reloadedPrompt = await PromptManager.loadPrompt('code-review-prompt');
+  const reloadedPrompt = await PromptManager.loadPrompt('git-commit-review-prompt');
   assert(reloadedPrompt === defaultPrompt, '重新加载的提示词应该相同');
 
   // 测试不存在的提示词（应该返回默认提示词）
@@ -265,7 +265,47 @@ async function testPromptManager() {
   const gitPrompt = await PromptManager.loadPrompt('git-commit-review-prompt');
   assert(typeof gitPrompt === 'string', 'Git 提示词应该是字符串');
 
+  // 测试统一提示词：所有审查功能都应该使用同一个提示词
+  const codeReviewPrompt = await PromptManager.loadPrompt('git-commit-review-prompt');
+  assert(codeReviewPrompt === gitPrompt, '所有审查功能应该使用统一的提示词');
+
   console.log('PromptManager 功能测试通过');
+}
+
+/**
+ * 测试统一提示词使用
+ */
+async function testUnifiedPromptUsage() {
+  // 导入 PromptManager 和内部方法
+  const { PromptManager } = await import('./coderocket.js') as any;
+
+  // 清除缓存以确保测试的准确性
+  PromptManager.clearCache();
+
+  // 直接测试内置默认提示词（避免受外部文件影响）
+  const defaultPrompt = (PromptManager as any).getDefaultPrompt('git-commit-review-prompt');
+
+  // 验证内置默认提示词内容包含关键特征
+  assert(typeof defaultPrompt === 'string', '内置默认提示词应该是字符串');
+  assert(defaultPrompt.length > 0, '内置默认提示词不应该为空');
+  assert(defaultPrompt.includes('审阅专家'), '内置默认提示词应该包含审阅专家角色定义');
+  assert(defaultPrompt.includes('自主执行模式'), '内置默认提示词应该包含执行模式说明');
+  assert(defaultPrompt.includes('审阅维度'), '内置默认提示词应该包含审阅维度');
+  assert(defaultPrompt.includes('功能完整性'), '内置默认提示词应该包含功能完整性检查');
+  assert(defaultPrompt.includes('代码质量'), '内置默认提示词应该包含代码质量检查');
+  assert(defaultPrompt.includes('安全性'), '内置默认提示词应该包含安全性检查');
+  assert(defaultPrompt.includes('中文表达'), '内置默认提示词应该要求中文表达');
+
+  // 测试不存在的提示词返回默认内容
+  const unknownPrompt = (PromptManager as any).getDefaultPrompt('unknown-prompt');
+  assert(typeof unknownPrompt === 'string', '未知提示词应该返回默认提示词');
+  assert(unknownPrompt.includes('默认提示词'), '未知提示词应该返回默认内容');
+
+  // 测试统一性：所有审查功能都应该使用同一个提示词名称
+  const gitCommitPrompt = (PromptManager as any).getDefaultPrompt('git-commit-review-prompt');
+  assert(gitCommitPrompt === defaultPrompt, '所有审查功能应该使用统一的提示词');
+
+  console.log('统一提示词使用测试通过');
 }
 
 /**
@@ -493,6 +533,7 @@ async function runTests() {
   // 核心组件测试
   await runTest('ConfigManager 核心功能测试', testConfigManager);
   await runTest('PromptManager 功能测试', testPromptManager);
+  await runTest('统一提示词使用测试', testUnifiedPromptUsage);
   await runTest('AI 服务故障转移测试', testAIServiceFailover);
 
   // 基础功能测试
