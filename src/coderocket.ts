@@ -9,6 +9,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import axios from 'axios';
 import {
   ReviewCodeRequest,
+  ReviewChangesRequest,
   ReviewCommitRequest,
   ReviewFilesRequest,
   ConfigureAIServiceRequest,
@@ -964,6 +965,208 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
       logger.error('代码审查失败', error instanceof Error ? error : new Error(String(error)));
       throw errorHandler.handleError(error, 'reviewCode');
     }
+  }
+
+  /**
+   * 审查Git变更（自动检测未提交的变更）
+   */
+  async reviewChanges(request: ReviewChangesRequest): Promise<ReviewResult> {
+    await this.ensureInitialized();
+
+    const repositoryPath = request.repository_path || process.cwd();
+    logger.info('开始Git变更审查', {
+      repositoryPath,
+      includeStaged: request.include_staged,
+      includeUnstaged: request.include_unstaged,
+      aiService: request.ai_service,
+    });
+
+    try {
+      // 检查是否为Git仓库
+      const isGitRepo = await this.checkGitRepository(repositoryPath);
+      if (!isGitRepo) {
+        throw new Error(`指定路径不是Git仓库: ${repositoryPath}`);
+      }
+
+      // 获取Git变更信息
+      const changes = await this.getGitChanges(repositoryPath, request);
+
+      if (!changes.hasChanges) {
+        return {
+          status: 'success' as ReviewStatus,
+          summary: '✅ 没有检测到未提交的代码变更',
+          details: '当前工作目录是干净的，所有变更都已提交。',
+          ai_service_used: request.ai_service || ConfigManager.getAIService(),
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      // 构建审查提示词
+      const reviewPrompt = this.buildChangesReviewPrompt(changes, request);
+
+      // 调用AI服务进行审查
+      const aiService = request.ai_service || ConfigManager.getAIService();
+      const result = await this.executeAIReview(aiService, 'git-commit-review-prompt', reviewPrompt);
+
+      logger.info('Git变更审查完成', {
+        status: result.status,
+        changedFiles: changes.files.length,
+        aiService: result.ai_service_used,
+      });
+
+      return result;
+    } catch (error) {
+      logger.error('Git变更审查失败', error instanceof Error ? error : new Error(String(error)));
+      throw errorHandler.handleError(error, 'reviewChanges');
+    }
+  }
+
+  /**
+   * 检查是否为Git仓库
+   */
+  private async checkGitRepository(repositoryPath: string): Promise<boolean> {
+    try {
+      const { stdout } = await execAsync('git rev-parse --git-dir', {
+        cwd: repositoryPath,
+      });
+      return stdout.trim().length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 获取Git变更信息
+   */
+  private async getGitChanges(repositoryPath: string, request: ReviewChangesRequest) {
+    const includeStaged = request.include_staged !== false;
+    const includeUnstaged = request.include_unstaged !== false;
+
+    let diffCommand = 'git diff';
+    if (includeStaged && includeUnstaged) {
+      diffCommand = 'git diff HEAD'; // 显示所有变更（已暂存+未暂存）
+    } else if (includeStaged) {
+      diffCommand = 'git diff --cached'; // 只显示已暂存的变更
+    } else if (includeUnstaged) {
+      diffCommand = 'git diff'; // 只显示未暂存的变更
+    }
+
+    try {
+      // 获取变更的文件列表
+      const { stdout: statusOutput } = await execAsync('git status --porcelain', {
+        cwd: repositoryPath,
+      });
+
+      // 获取详细的diff信息
+      const { stdout: diffOutput } = await execAsync(diffCommand, {
+        cwd: repositoryPath,
+      });
+
+      const files = this.parseGitStatus(statusOutput);
+      const hasChanges = files.length > 0 || diffOutput.trim().length > 0;
+
+      return {
+        hasChanges,
+        files,
+        diff: diffOutput,
+        statusOutput,
+      };
+    } catch (error) {
+      logger.error('获取Git变更信息失败', error instanceof Error ? error : new Error(String(error)));
+      throw new Error(`无法获取Git变更信息: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * 解析Git状态输出
+   */
+  private parseGitStatus(statusOutput: string) {
+    const files: Array<{
+      path: string;
+      status: string;
+      statusDescription: string;
+    }> = [];
+
+    const lines = statusOutput.trim().split('\n').filter(line => line.length > 0);
+
+    for (const line of lines) {
+      if (line.length < 3) continue;
+
+      const status = line.substring(0, 2);
+      const path = line.substring(3);
+
+      const statusDescription = this.getGitStatusDescription(status);
+
+      files.push({
+        path,
+        status,
+        statusDescription,
+      });
+    }
+
+    return files;
+  }
+
+  /**
+   * 获取Git状态描述
+   */
+  private getGitStatusDescription(status: string): string {
+    const statusMap: Record<string, string> = {
+      'M ': '已修改（已暂存）',
+      ' M': '已修改（未暂存）',
+      'MM': '已修改（部分暂存）',
+      'A ': '新增文件（已暂存）',
+      ' A': '新增文件（未暂存）',
+      'D ': '已删除（已暂存）',
+      ' D': '已删除（未暂存）',
+      'R ': '重命名（已暂存）',
+      ' R': '重命名（未暂存）',
+      'C ': '复制（已暂存）',
+      ' C': '复制（未暂存）',
+      '??': '未跟踪文件',
+      '!!': '忽略文件',
+    };
+
+    return statusMap[status] || `未知状态: ${status}`;
+  }
+
+  /**
+   * 构建变更审查提示词
+   */
+  private buildChangesReviewPrompt(changes: any, request: ReviewChangesRequest): string {
+    const filesList = changes.files.map((file: any) =>
+      `- ${file.path} (${file.statusDescription})`
+    ).join('\n');
+
+    return `请审查以下Git变更：
+
+## 变更概览
+变更文件数量: ${changes.files.length}
+
+## 变更文件列表
+${filesList}
+
+## 详细变更内容
+\`\`\`diff
+${changes.diff}
+\`\`\`
+
+## Git状态信息
+\`\`\`
+${changes.statusOutput}
+\`\`\`
+
+请根据以下要求进行全面审查：
+1. 变更逻辑的合理性和完整性
+2. 代码质量和最佳实践遵循
+3. 潜在的安全风险和性能问题
+4. 与现有代码的一致性检查
+5. 测试覆盖和文档更新建议
+6. 提交信息和变更范围的匹配度
+
+${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
+
+**重要：请务必使用中文回复，所有审查结果、建议和评价都必须用中文表达。**`;
   }
 
   /**

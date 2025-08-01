@@ -12,7 +12,7 @@ export type ReviewStatus = z.infer<typeof ReviewStatusSchema>;
 export const ConfigScopeSchema = z.enum(['project', 'global']);
 export type ConfigScope = z.infer<typeof ConfigScopeSchema>;
 
-// 代码审查请求
+// 代码审查请求（传统方式，保留向后兼容）
 export const ReviewCodeRequestSchema = z.object({
   code: z.string().describe('要审查的代码内容'),
   language: z.string().optional().describe('代码语言（可选，用于更好的分析）'),
@@ -21,6 +21,16 @@ export const ReviewCodeRequestSchema = z.object({
   custom_prompt: z.string().optional().describe('自定义审查提示词（可选）'),
 });
 export type ReviewCodeRequest = z.infer<typeof ReviewCodeRequestSchema>;
+
+// Git变更审查请求（新的自动化方式）
+export const ReviewChangesRequestSchema = z.object({
+  repository_path: z.string().optional().describe('Git仓库路径（可选，默认为当前目录）'),
+  ai_service: AIServiceSchema.optional().describe('指定使用的AI服务（可选）'),
+  custom_prompt: z.string().optional().describe('自定义审查提示词（可选）'),
+  include_staged: z.boolean().optional().default(true).describe('是否包含已暂存的变更'),
+  include_unstaged: z.boolean().optional().default(true).describe('是否包含未暂存的变更'),
+});
+export type ReviewChangesRequest = z.infer<typeof ReviewChangesRequestSchema>;
 
 // Git提交审查请求
 export const ReviewCommitRequestSchema = z.object({

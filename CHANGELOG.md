@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-08-01
+
+### 🚀 Major Feature: Automatic Git Changes Review
+
+#### ✨ Added
+- **New `review_changes` Tool**: Revolutionary zero-parameter code review tool
+  - Automatically detects and reviews all uncommitted Git changes
+  - No need to manually copy/paste code content
+  - Supports both staged and unstaged changes
+  - Intelligent file type detection and language recognition
+  - Comprehensive change analysis with context awareness
+
+#### 🔧 Enhanced Architecture
+- **Smart Git Integration**: Built-in Git repository detection and validation
+- **Flexible Change Detection**: Configurable inclusion of staged/unstaged changes
+- **Advanced Diff Analysis**: Detailed parsing of Git status and diff output
+- **Context-Aware Prompts**: Dynamic prompt generation based on actual changes
+
+#### 📝 API Improvements
+- **New Type Definitions**: Added `ReviewChangesRequest` and related schemas
+- **Enhanced Tool Registration**: Updated MCP tool registry with comprehensive descriptions
+- **Backward Compatibility**: Maintained existing `review_code` tool for manual use cases
+
+#### 🛠️ Technical Features
+- **Repository Validation**: Automatic Git repository detection
+- **Status Parsing**: Intelligent Git status output interpretation
+- **Change Categorization**: Clear distinction between different change types
+- **Error Handling**: Robust error handling for non-Git directories
+
+#### 📚 Documentation Updates
+- **README Enhancement**: Added quick start guide for new `review_changes` tool
+- **Tool Descriptions**: Comprehensive documentation of all available tools
+- **Usage Examples**: Clear examples for different use cases
+
+---
+
 ## [1.1.6] - 2025-08-01
 
 ### 🌐 Language Configuration Enhancement

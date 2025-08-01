@@ -9,6 +9,7 @@ import {
 import { CodeRocketService } from './coderocket.js';
 import {
   ReviewCodeRequestSchema,
+  ReviewChangesRequestSchema,
   ReviewCommitRequestSchema,
   ReviewFilesRequestSchema,
   ConfigureAIServiceRequestSchema,
@@ -51,6 +52,34 @@ function createJsonSchemas() {
         }
       },
       required: ['code'],
+      additionalProperties: false
+    },
+    reviewChanges: {
+      type: 'object',
+      properties: {
+        repository_path: {
+          type: 'string',
+          description: 'Git仓库路径（可选，默认为当前目录）'
+        },
+        ai_service: {
+          type: 'string',
+          enum: ['gemini', 'claudecode'],
+          description: '指定使用的AI服务（可选）'
+        },
+        custom_prompt: {
+          type: 'string',
+          description: '自定义审查提示词（可选）'
+        },
+        include_staged: {
+          type: 'boolean',
+          description: '是否包含已暂存的变更（默认：true）'
+        },
+        include_unstaged: {
+          type: 'boolean',
+          description: '是否包含未暂存的变更（默认：true）'
+        }
+      },
+      required: [],
       additionalProperties: false
     },
     reviewCommit: {
@@ -151,7 +180,7 @@ class CodeRocketMCPServer {
 
   constructor() {
     // 读取实际版本号
-    let version = '1.1.6'; // 默认版本
+    let version = '1.2.0'; // 默认版本
     try {
       const packagePath = resolve(__dirname, '../package.json');
       const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
@@ -203,6 +232,34 @@ class CodeRocketMCPServer {
 
 **输出格式**: 结构化的审查报告，包含状态评级、摘要和详细分析`,
             inputSchema: schemas.reviewCode,
+          },
+          {
+            name: 'review_changes',
+            description: `🚀 Git变更自动审查工具
+
+**功能**: 自动检测并审查当前Git仓库中所有未提交的代码变更，无需手动传递代码内容。
+
+**适用场景**:
+- 提交前的自动化代码质量检查
+- 开发过程中的实时代码审查
+- CI/CD流程中的质量门禁
+- 团队协作中的代码规范检查
+
+**AI分析维度**:
+- 变更逻辑的合理性和完整性
+- 代码质量和最佳实践遵循
+- 潜在的安全风险和性能问题
+- 与现有代码的一致性检查
+- 测试覆盖和文档更新建议
+
+**自动化特性**:
+- 零参数调用，自动检测Git变更
+- 支持已暂存和未暂存变更的分别审查
+- 智能识别文件类型和编程语言
+- 提供上下文相关的改进建议
+
+**输出格式**: 详细的变更审查报告，包含文件级和整体级分析`,
+            inputSchema: schemas.reviewChanges,
           },
           {
             name: 'review_commit',
@@ -308,6 +365,19 @@ class CodeRocketMCPServer {
           case 'review_code': {
             const parsedArgs = ReviewCodeRequestSchema.parse(args);
             const result = await this.codeRocketService.reviewCode(parsedArgs);
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2),
+                },
+              ],
+            };
+          }
+
+          case 'review_changes': {
+            const parsedArgs = ReviewChangesRequestSchema.parse(args);
+            const result = await this.codeRocketService.reviewChanges(parsedArgs);
             return {
               content: [
                 {

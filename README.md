@@ -95,6 +95,15 @@ npm start
 
 ## 🚀 快速开始
 
+### 新功能：自动Git变更审查
+
+使用新的 `review_changes` 工具，无需手动传递代码内容，自动检测并审查当前Git仓库中所有未提交的变更：
+
+```bash
+# 零参数调用，自动审查所有未提交变更
+npx @yeepay/coderocket-mcp review_changes
+```
+
 ### 1. 配置AI服务
 
 配置至少一个AI服务的API密钥：
@@ -128,7 +137,7 @@ npx -y @yeepay/coderocket-mcp test
   "mcpServers": {
     "coderocket": {
       "command": "npx",
-      "args": ["-y", "@yeepay/coderocket-mcp", "start"],
+      "args": ["-y", "@yeepay/coderocket-mcp"],
       "env": {
         "GEMINI_API_KEY": "your_gemini_api_key"
       }
