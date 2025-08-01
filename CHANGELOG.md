@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.6] - 2025-08-01
+
+### 🌐 Language Configuration Enhancement
+
+#### ✨ Added
+- **AI Language Configuration**: Added `AI_LANGUAGE` configuration option to control AI service response language
+  - Default language set to `zh-CN` (Chinese)
+  - Support for `en-US` (English) and other language codes
+  - Language setting can be configured via environment variables or configuration files
+
+#### 🔧 Enhanced
+- **Prompt Enhancement**: All prompts now explicitly request Chinese responses
+  - Added language instructions to `git-commit-review-prompt`
+  - Added language instructions to `code-review-prompt`
+  - Enhanced `executeAIReview` method to dynamically add language requirements
+
+#### 📝 Configuration Updates
+- **ConfigManager**: Added `getAILanguage()` method for language configuration retrieval
+- **Service Configuration**: Added language parameter to `configureAIService` API
+- **Status Response**: Added language information to service status response
+
+#### 🛠️ API Improvements
+- **Tool Schema**: Updated `configure_ai_service` tool to include language parameter
+- **Type Definitions**: Enhanced `ConfigureAIServiceRequest` and `ServiceStatusResponse` schemas
+
+---
+
 ## [1.1.5] - 2025-08-01
 
 ### 🔧 Error Message Cleanup
