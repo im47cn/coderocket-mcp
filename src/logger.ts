@@ -89,13 +89,13 @@ export class Logger {
       error,
     };
 
-    // 输出到控制台（根据日志级别选择合适的输出流）
+    // 输出到控制台（所有日志都输出到 stderr 以避免污染 MCP 协议的 stdout）
     const levelName = LogLevel[level];
     const contextStr = context ? ` ${JSON.stringify(context)}` : '';
     const errorStr = error ? ` Error: ${error.message}` : '';
 
-    const logMethod = level >= LogLevel.WARN ? console.error : console.log;
-    logMethod(
+    // 在 MCP 模式下，所有日志都应该输出到 stderr
+    console.error(
       `[${entry.timestamp}] ${levelName}: ${message}${contextStr}${errorStr}`,
     );
 
