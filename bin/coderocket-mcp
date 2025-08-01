@@ -100,11 +100,10 @@ CodeRocket MCP - 独立的AI驱动代码审查服务器
           readFileSync(packagePath, 'utf-8')
         );
         console.log(`CodeRocket MCP v${packageJson.version}`);
-        console.log(`独立版本 - 无需 coderocket-cli 依赖`);
       } catch (error) {
         console.error('⚠️ 无法读取版本信息:', error.message);
         console.error('📁 尝试的路径:', resolve(__dirname, '../package.json'));
-        console.log('CodeRocket MCP (独立版本)');
+        console.log('CodeRocket MCP');
         console.log('💡 运行 "npm view @yeepay/coderocket-mcp version" 查看最新版本');
       }
       break;

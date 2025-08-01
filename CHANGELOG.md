@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2025-08-01
+
+### 🔧 Error Message Cleanup
+
+#### 🧹 Removed Legacy References
+- **Fixed Error Messages**: Removed all references to `coderocket-cli` from error messages and suggestions
+  - Updated `src/index.ts` error suggestions to focus on independent operation
+  - Updated `src/logger.ts` error handling to remove CLI dependency references
+  - Error messages now provide relevant suggestions for the independent version
+
+#### 📝 Documentation Updates
+- **Cleaned Up Documentation**: Removed outdated references to `coderocket-cli` dependency
+- **Updated Links**: Fixed repository links to point to the correct monorepo structure
+- **Removed Legacy Files**: Cleaned up obsolete installation scripts and documentation
+
+#### 🚀 Version Management
+- **Fixed Version Display**: Corrected version reading logic to show actual package version
+- **Updated Default Version**: Synchronized default version with package.json
+
+---
+
 ## [1.1.2] - 2025-08-01
 
 ### 🔧 Critical MCP Protocol Fixes
