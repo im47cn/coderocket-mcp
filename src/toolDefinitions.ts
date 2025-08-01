@@ -5,7 +5,7 @@ import {
   ReviewCommitRequestSchema,
   ReviewFilesRequestSchema,
   ConfigureAIServiceRequestSchema,
-} from './types';
+} from './types.js';
 
 export type ToolDef = {
   name: string;
