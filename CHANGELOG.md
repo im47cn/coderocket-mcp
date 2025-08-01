@@ -263,13 +263,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🧹 Service Cleanup & Test Enhancement
 
-#### ✨ Removed
-
-- **OpenCode Service**: Removed expired OpenCode service integration
-  - Removed from type definitions and service configurations
-  - Updated AI service manager to only support Gemini and ClaudeCode
-  - Cleaned up documentation and environment variable references
-
 #### 🐛 Critical Bug Fixes
 
 - **Version Display Issue**: Fixed version command always showing hardcoded fallback
@@ -327,7 +320,6 @@ This release marks a major milestone: **CodeRocket MCP is now completely indepen
 - **Direct AI Service Integration**: Native API implementations for:
   - **Gemini**: Using `@google/generative-ai` SDK with `gemini-1.5-flash` model
   - **ClaudeCode**: Using `@anthropic-ai/sdk` for direct API calls
-  - **OpenCode**: HTTP-based API integration with axios
 
 - **Intelligent AI Manager**: New `AIManager` class with:
   - Smart service selection and failover

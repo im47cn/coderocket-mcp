@@ -7,22 +7,39 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { readFile } from 'fs/promises';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { CodeRocketService } from './coderocket.js';
 import {
   ReviewCodeRequestSchema,
   ReviewChangesRequestSchema,
   ReviewCommitRequestSchema,
   ReviewFilesRequestSchema,
+  ConfigureAIServiceRequestSchema,
+  GetAIServiceStatusRequestSchema,
 } from './types.js';
 import { toolDefinitions } from './toolDefinitions.js';
 
+// 读取版本号
+const getVersion = async (): Promise<string> => {
+  try {
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    const packageJsonPath = resolve(__dirname, '../package.json');
+    const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'));
+    return packageJson.version || 'unknown';
+  } catch (error) {
+    console.error('Failed to read version from package.json:', error);
+    return 'unknown';
+  }
+};
 
-
+const VERSION = await getVersion();
 
 /**
  * CodeRocket MCP Server
  *
- * 提供AI驱动的代码审查功能，集成多种AI服务（Gemini、OpenCode、ClaudeCode）
+ * 提供AI驱动的代码审查功能，集成多种AI服务（Gemini、ClaudeCode）
  * 支持代码片段审查、Git提交审查、文件审查和AI服务管理
  */
 class CodeRocketMCPServer {
@@ -33,7 +50,7 @@ class CodeRocketMCPServer {
     this.server = new Server(
       {
         name: 'coderocket-mcp',
-        version: '1.3.2',
+        version: VERSION,
       },
       {
         capabilities: {
@@ -72,61 +89,39 @@ class CodeRocketMCPServer {
         throw new Error('CodeRocketService 未初始化，请稍后重试');
       }
 
+      // 辅助函数，用于创建和执行工具调用
+      const createToolHandler = async (schema: any, serviceMethod: (args: any) => Promise<any>) => {
+        const parsedArgs = schema.parse(args);
+        const result = await serviceMethod.call(this.codeRocketService, parsedArgs);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      };
+
       try {
         switch (name) {
-          case 'review_code': {
-            const parsedArgs = ReviewCodeRequestSchema.parse(args);
-            const result = await this.codeRocketService.reviewCode(parsedArgs);
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(result, null, 2),
-                },
-              ],
-            };
-          }
+          case 'review_code':
+            return await createToolHandler(ReviewCodeRequestSchema, this.codeRocketService.reviewCode);
 
-          case 'review_changes': {
-            const parsedArgs = ReviewChangesRequestSchema.parse(args);
-            const result =
-              await this.codeRocketService.reviewChanges(parsedArgs);
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(result, null, 2),
-                },
-              ],
-            };
-          }
+          case 'review_changes':
+            return await createToolHandler(ReviewChangesRequestSchema, this.codeRocketService.reviewChanges);
 
-          case 'review_commit': {
-            const parsedArgs = ReviewCommitRequestSchema.parse(args);
-            const result =
-              await this.codeRocketService.reviewCommit(parsedArgs);
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(result, null, 2),
-                },
-              ],
-            };
-          }
+          case 'review_commit':
+            return await createToolHandler(ReviewCommitRequestSchema, this.codeRocketService.reviewCommit);
 
-          case 'review_files': {
-            const parsedArgs = ReviewFilesRequestSchema.parse(args);
-            const result = await this.codeRocketService.reviewFiles(parsedArgs);
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(result, null, 2),
-                },
-              ],
-            };
-          }
+          case 'review_files':
+            return await createToolHandler(ReviewFilesRequestSchema, this.codeRocketService.reviewFiles);
+
+          case 'configure_ai_service':
+            return await createToolHandler(ConfigureAIServiceRequestSchema, this.codeRocketService.configureAIService);
+
+          case 'get_ai_service_status':
+            return await createToolHandler(GetAIServiceStatusRequestSchema, this.codeRocketService.getAIServiceStatus);
 
           default:
             throw new Error(`Unknown tool: ${name}`);

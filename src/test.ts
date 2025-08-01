@@ -7,6 +7,13 @@
  */
 
 import { CodeRocketService, ConfigManager } from './coderocket.js';
+import { 
+  ConfigureAIServiceRequest, 
+  ConfigureAIServiceResponse,
+  GetAIServiceStatusRequest,
+  GetAIServiceStatusResponse,
+  AIServiceStatus 
+} from './types.js';
 import { logger } from './logger.js';
 import { writeFile, mkdir, unlink, rmdir, readFile } from 'fs/promises';
 import { join } from 'path';
@@ -63,12 +70,12 @@ async function testCodeReview() {
 
   // 如果没有配置 API 密钥，跳过实际的 API 调用测试
   const hasApiKey =
-    process.env.GEMINI_API_KEY || process.env.CLAUDECODE_API_KEY;
+    process.env.GEMINI_API_KEY || process.env.CLAUDE_API_KEY;
 
   if (!hasApiKey) {
     console.log('跳过代码审查测试 - 未配置 API 密钥');
     console.log('要运行完整测试，请设置以下环境变量之一:');
-    console.log('  GEMINI_API_KEY, CLAUDECODE_API_KEY');
+    console.log('  GEMINI_API_KEY, CLAUDE_API_KEY');
     return;
   }
 
@@ -183,7 +190,7 @@ async function testConfigManager() {
 
     const claudeEnvVar = ConfigManager.getAPIKeyEnvVar('claudecode');
     assert(
-      claudeEnvVar === 'CLAUDECODE_API_KEY',
+      claudeEnvVar === 'CLAUDE_API_KEY',
       'ClaudeCode API 密钥环境变量名应该正确',
     );
 
@@ -412,7 +419,7 @@ async function testBoundaryConditions() {
 
   // 如果没有配置 API 密钥，跳过实际的 API 调用测试
   const hasApiKey =
-    process.env.GEMINI_API_KEY || process.env.CLAUDECODE_API_KEY;
+    process.env.GEMINI_API_KEY || process.env.CLAUDE_API_KEY;
 
   if (!hasApiKey) {
     console.log('跳过边界条件测试 - 未配置 API 密钥');
@@ -539,6 +546,187 @@ A  test-file.js
   console.log('✅ Git变更审查功能测试完成');
 }
 
+/**
+ * 测试AI服务配置功能
+ */
+async function testConfigureAIService() {
+  console.log('🔧 开始测试AI服务配置功能...');
+  
+  const service = new CodeRocketService();
+  const tempDir = join(tmpdir(), `coderocket-test-${Date.now()}`);
+  
+  try {
+    // 创建临时目录
+    await mkdir(tempDir, { recursive: true });
+    
+    // 测试配置Gemini服务
+    const geminiRequest: ConfigureAIServiceRequest = {
+      service: 'gemini',
+      scope: 'project',
+      api_key: 'test-gemini-api-key',
+      timeout: 30,
+      max_retries: 3,
+    };
+    
+    const geminiResponse = await service.configureAIService(geminiRequest);
+    
+    // 验证响应格式
+    assert(typeof geminiResponse.success === 'boolean', 'configureAIService响应格式错误 - success字段');
+    assert(typeof geminiResponse.message === 'string', 'configureAIService响应格式错误 - message字段');
+    assert(geminiResponse.success === true, 'Gemini服务配置应该成功');
+    console.log(`Gemini配置成功: ${geminiResponse.message}`);
+    
+    // 测试配置ClaudeCode服务
+    const claudeRequest: ConfigureAIServiceRequest = {
+      service: 'claudecode',
+      scope: 'global',
+      api_key: 'test-claude-api-key',
+      timeout: 60,
+      max_retries: 5,
+    };
+    
+    const claudeResponse = await service.configureAIService(claudeRequest);
+    assert(claudeResponse.success === true, 'ClaudeCode服务配置应该成功');
+    console.log(`ClaudeCode配置成功: ${claudeResponse.message}`);
+    
+    // 测试无效服务
+    try {
+      const invalidRequest: ConfigureAIServiceRequest = {
+        service: 'invalid-service' as any,
+        scope: 'project',
+        api_key: 'test-key',
+      };
+      await service.configureAIService(invalidRequest);
+      assert(false, '应该抛出无效服务错误');
+    } catch (error) {
+      assert(error instanceof Error, '错误类型不正确');
+      assert((error as Error).message.includes('不支持的AI服务'), '错误消息不正确');
+      console.log('无效服务错误处理正确');
+    }
+    
+    // 测试无变更配置
+    const noChangeRequest: ConfigureAIServiceRequest = {
+      service: 'gemini',
+      scope: 'project',
+    };
+    
+    const noChangeResponse = await service.configureAIService(noChangeRequest);
+    assert(noChangeResponse.success === true, '无变更配置应该成功');
+    assert(noChangeResponse.restart_required === false, '无变更配置不应该需要重启');
+    console.log('无变更配置测试通过');
+    
+  } finally {
+    // 清理临时文件
+    try {
+      await rmdir(tempDir, { recursive: true });
+    } catch (error) {
+      console.warn('清理临时目录失败:', error);
+    }
+  }
+  
+  console.log('✅ AI服务配置功能测试完成');
+}
+
+/**
+ * 测试AI服务状态获取功能
+ */
+async function testGetAIServiceStatus() {
+  console.log('📊 开始测试AI服务状态获取功能...');
+  
+  const service = new CodeRocketService();
+  
+  const request: GetAIServiceStatusRequest = {};
+  const response = await service.getAIServiceStatus(request);
+  
+  // 验证响应格式
+  assert(Array.isArray(response.services), 'getAIServiceStatus响应格式错误 - services应该是数组');
+  assert(typeof response.current_service === 'string', 'getAIServiceStatus响应格式错误 - current_service字段');
+  assert(typeof response.auto_switch_enabled === 'boolean', 'getAIServiceStatus响应格式错误 - auto_switch_enabled字段');
+  
+  // 验证服务状态结构
+  assert(response.services.length > 0, '应该至少有一个AI服务');
+  
+  for (const serviceStatus of response.services) {
+    assert(typeof serviceStatus.service === 'string', '服务状态格式错误 - service字段');
+    assert(typeof serviceStatus.available === 'boolean', '服务状态格式错误 - available字段');
+    assert(typeof serviceStatus.configured === 'boolean', '服务状态格式错误 - configured字段');
+    
+    // 检查必需字段
+    const requiredFields = ['service', 'available', 'configured'];
+    for (const field of requiredFields) {
+      assert(field in serviceStatus, `服务状态缺少必需字段: ${field}`);
+    }
+    
+    console.log(`服务状态: ${serviceStatus.service} - 可用: ${serviceStatus.available}, 已配置: ${serviceStatus.configured}`);
+  }
+  
+  // 验证支持的服务
+  const supportedServices = ['gemini', 'claudecode'] as const;
+  const returnedServices = response.services.map(s => s.service);
+  
+  for (const supportedService of supportedServices) {
+    assert(
+      returnedServices.includes(supportedService),
+      `缺少支持的服务: ${supportedService}`
+    );
+  }
+  
+  console.log(`当前服务: ${response.current_service}`);
+  console.log(`自动切换: ${response.auto_switch_enabled ? '启用' : '禁用'}`);
+  
+  console.log('✅ AI服务状态获取功能测试完成');
+}
+
+/**
+ * 验证配置AI服务响应格式
+ */
+function validateConfigureAIServiceResponse(response: ConfigureAIServiceResponse): void {
+  assert(typeof response.success === 'boolean', '响应格式错误 - success字段类型');
+  assert(typeof response.message === 'string', '响应格式错误 - message字段类型');
+  
+  if (response.config_path !== undefined) {
+    assert(typeof response.config_path === 'string', '响应格式错误 - config_path字段类型');
+  }
+  
+  if (response.restart_required !== undefined) {
+    assert(typeof response.restart_required === 'boolean', '响应格式错误 - restart_required字段类型');
+  }
+}
+
+/**
+ * 验证AI服务状态响应格式
+ */
+function validateGetAIServiceStatusResponse(response: GetAIServiceStatusResponse): void {
+  assert(Array.isArray(response.services), '响应格式错误 - services应该是数组');
+  assert(typeof response.current_service === 'string', '响应格式错误 - current_service字段类型');
+  assert(typeof response.auto_switch_enabled === 'boolean', '响应格式错误 - auto_switch_enabled字段类型');
+  
+  for (const service of response.services) {
+    validateAIServiceStatus(service);
+  }
+}
+
+/**
+ * 验证AI服务状态格式
+ */
+function validateAIServiceStatus(status: AIServiceStatus): void {
+  assert(typeof status.service === 'string', 'AI服务状态格式错误 - service字段类型');
+  assert(typeof status.available === 'boolean', 'AI服务状态格式错误 - available字段类型');
+  assert(typeof status.configured === 'boolean', 'AI服务状态格式错误 - configured字段类型');
+  
+  if (status.install_command !== undefined) {
+    assert(typeof status.install_command === 'string', 'AI服务状态格式错误 - install_command字段类型');
+  }
+  
+  if (status.config_command !== undefined) {
+    assert(typeof status.config_command === 'string', 'AI服务状态格式错误 - config_command字段类型');
+  }
+  
+  if (status.error_message !== undefined) {
+    assert(typeof status.error_message === 'string', 'AI服务状态格式错误 - error_message字段类型');
+  }
+}
+
 async function runTests() {
   console.log('🚀 CodeRocket MCP 测试开始\n');
   console.log('='.repeat(60));
@@ -548,6 +736,10 @@ async function runTests() {
   await runTest('PromptManager 功能测试', testPromptManager);
   await runTest('统一提示词使用测试', testUnifiedPromptUsage);
   await runTest('AI 服务故障转移测试', testAIServiceFailover);
+
+  // 新增MCP工具测试
+  await runTest('AI服务配置功能测试', testConfigureAIService);
+  await runTest('AI服务状态获取功能测试', testGetAIServiceStatus);
 
   // 基础功能测试
   await runTest('代码审查测试', testCodeReview);

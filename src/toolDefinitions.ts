@@ -4,6 +4,8 @@ import {
   ReviewChangesRequestSchema,
   ReviewCommitRequestSchema,
   ReviewFilesRequestSchema,
+  ConfigureAIServiceRequestSchema,
+  GetAIServiceStatusRequestSchema,
 } from './types.js';
 
 export type ToolDef = {
@@ -106,5 +108,60 @@ export const toolDefinitions: ToolDef[] = [
 
 **输出格式**: 综合性的多文件审查报告，包含文件级和项目级分析`,
     schema: ReviewFilesRequestSchema,
+  },
+  {
+    name: 'configure_ai_service',
+    description: `⚙️ **AI服务配置管理工具**
+
+**功能**: 配置和管理AI服务的设置，包括API密钥、超时时间、重试次数等参数。
+
+**适用场景**:
+- 初始化AI服务配置
+- 更新API密钥或服务参数
+- 切换不同的AI服务提供商
+- 调整服务性能参数
+
+**配置维度**:
+- API密钥管理
+- 超时时间设置
+- 最大重试次数配置
+- 配置范围选择（项目级/全局级）
+- 服务可用性验证
+
+**支持的AI服务**:
+- Gemini: Google的生成式AI服务
+- ClaudeCode: Anthropic的代码专用AI服务
+
+**输出格式**: 配置结果反馈，包含成功状态、配置路径和重启提示`,
+    schema: ConfigureAIServiceRequestSchema,
+  },
+  {
+    name: 'get_ai_service_status',
+    description: `📊 **AI服务状态监控工具**
+
+**功能**: 检查所有AI服务的当前状态，包括可用性、配置状态和运行参数。
+
+**适用场景**:
+- 服务健康状态检查
+- 故障排查和诊断
+- 服务配置验证
+- 系统监控和运维
+
+**状态信息**:
+- 服务可用性检测
+- 配置完整性验证
+- 当前激活的服务
+- 自动切换状态
+- 错误信息和解决建议
+
+**监控维度**:
+- API连接状态
+- 认证信息有效性
+- 服务响应时间
+- 配置文件完整性
+- 安装状态检查
+
+**输出格式**: 完整的服务状态报告，包含所有服务的详细信息和系统配置`,
+    schema: GetAIServiceStatusRequestSchema,
   },
 ];

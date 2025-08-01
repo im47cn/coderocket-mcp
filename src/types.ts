@@ -102,4 +102,35 @@ export const ErrorResponseSchema = z.object({
 });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
 
+// 配置AI服务请求
+export const ConfigureAIServiceRequestSchema = z.object({
+  service: AIServiceSchema.describe('要配置的AI服务（gemini/claudecode）'),
+  scope: z.enum(['project', 'global']).optional().default('project').describe('配置范围（project: 项目级别, global: 全局级别）'),
+  api_key: z.string().optional().describe('API密钥'),
+  timeout: z.number().optional().describe('超时时间（秒）'),
+  max_retries: z.number().optional().describe('最大重试次数'),
+});
+export type ConfigureAIServiceRequest = z.infer<typeof ConfigureAIServiceRequestSchema>;
+
+// 获取AI服务状态请求（无参数）
+export const GetAIServiceStatusRequestSchema = z.object({});
+export type GetAIServiceStatusRequest = z.infer<typeof GetAIServiceStatusRequestSchema>;
+
+// 配置AI服务响应
+export const ConfigureAIServiceResponseSchema = z.object({
+  success: z.boolean().describe('配置是否成功'),
+  message: z.string().describe('成功或错误信息'),
+  config_path: z.string().optional().describe('配置文件保存路径'),
+  restart_required: z.boolean().optional().describe('是否需要重启服务'),
+});
+export type ConfigureAIServiceResponse = z.infer<typeof ConfigureAIServiceResponseSchema>;
+
+// 获取AI服务状态响应
+export const GetAIServiceStatusResponseSchema = z.object({
+  services: z.array(AIServiceStatusSchema).describe('所有AI服务的状态信息'),
+  current_service: z.string().describe('当前激活的AI服务'),
+  auto_switch_enabled: z.boolean().describe('是否启用自动切换'),
+});
+export type GetAIServiceStatusResponse = z.infer<typeof GetAIServiceStatusResponseSchema>;
+
 

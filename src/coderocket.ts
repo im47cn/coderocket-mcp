@@ -1,8 +1,9 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { readFile } from 'fs/promises';
+import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join, resolve } from 'path';
 import { homedir } from 'os';
+import { existsSync } from 'fs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Anthropic from '@anthropic-ai/sdk';
 import {
@@ -10,11 +11,15 @@ import {
   ReviewChangesRequest,
   ReviewCommitRequest,
   ReviewFilesRequest,
+  ConfigureAIServiceRequest,
+  ConfigureAIServiceResponse,
+  GetAIServiceStatusRequest,
+  GetAIServiceStatusResponse,
   ReviewResult,
   AIService,
   ReviewStatus,
 } from './types.js';
-import { logger, errorHandler } from './logger.js';
+import { AIServiceError, GitError, FileError, logger, errorHandler } from './logger.js';
 
 const execAsync = promisify(exec);
 
@@ -66,12 +71,12 @@ export class ConfigManager {
       AI_LANGUAGE: 'zh-CN',
       NODE_ENV: 'production',
       DEBUG: 'false',
+      GEMINI_MODEL: 'gemini-1.5-flash',
+      CLAUDE_MODEL: 'claude-3-sonnet-20240229',
+      FILE_CONTENT_CHAR_LIMIT: '5000',
     };
   }
 
-  /**
-   * 加载全局配置文件 ~/.coderocket/env
-   */
   private static async loadGlobalConfig(): Promise<void> {
     try {
       const globalConfigPath = join(homedir(), '.coderocket', 'env');
@@ -112,7 +117,7 @@ export class ConfigManager {
       'AI_MAX_RETRIES',
       'AI_RETRY_DELAY',
       'GEMINI_API_KEY',
-      'CLAUDECODE_API_KEY',
+      'CLAUDE_API_KEY',
       'NODE_ENV',
       'DEBUG',
     ];
@@ -127,7 +132,7 @@ export class ConfigManager {
   /**
    * 解析 .env 文件内容
    */
-  private static parseEnvContent(content: string): Record<string, string> {
+  static parseEnvContent(content: string): Record<string, string> {
     const config: Record<string, string> = {};
     const lines = content.split('\n');
 
@@ -162,7 +167,7 @@ export class ConfigManager {
   static getAPIKeyEnvVar(service: AIService): string {
     const envVarMap: Record<AIService, string> = {
       gemini: 'GEMINI_API_KEY',
-      claudecode: 'CLAUDECODE_API_KEY',
+      claudecode: 'CLAUDE_API_KEY',
     };
     return envVarMap[service];
   }
@@ -354,7 +359,10 @@ export class PromptManager {
 - 优先级排序的建议列表
 - 优秀实践的识别
 
-请确保审阅报告专业、准确、可操作。
+请将审阅结果以JSON格式返回，包含以下字段：
+- status: 审阅状态 (String，可选值为：'✅通過', '⚠️警告', '❌失敗', '🔍需調查')
+- summary: 对变更的总体评价 (String)
+- details: 详细的问题列表和改进建议 (String，使用Markdown格式)
 
 **重要：请务必使用中文回复，所有审查结果、建议和评价都必须用中文表达。**`,
     };
@@ -420,7 +428,7 @@ class GeminiService implements IAIService {
       try {
         this.client = new GoogleGenerativeAI(apiKey);
         this.model = this.client.getGenerativeModel({
-          model: 'gemini-1.5-flash',
+          model: ConfigManager.get('GEMINI_MODEL', 'gemini-1.5-flash'),
         });
         logger.debug('Gemini 服务初始化成功');
       } catch (error) {
@@ -436,7 +444,7 @@ class GeminiService implements IAIService {
     if (!this.client || !this.model) {
       await this.initialize();
       if (!this.client || !this.model) {
-        throw new Error('Gemini 服务未配置或初始化失败');
+        throw new AIServiceError('Gemini 服务未配置或初始化失败');
       }
     }
 
@@ -450,7 +458,7 @@ class GeminiService implements IAIService {
       const text = response.text();
 
       if (!text || text.trim().length === 0) {
-        throw new Error('Gemini 返回空响应');
+        throw new AIServiceError('Gemini 返回空响应');
       }
 
       logger.debug('Gemini API 调用成功', {
@@ -464,7 +472,7 @@ class GeminiService implements IAIService {
         'Gemini API 调用失败',
         error instanceof Error ? error : new Error(String(error)),
       );
-      throw new Error(
+      throw new AIServiceError(
         `Gemini API 调用失败: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
@@ -519,7 +527,7 @@ class ClaudeCodeService implements IAIService {
     if (!this.client) {
       await this.initialize();
       if (!this.client) {
-        throw new Error('ClaudeCode 服务未配置或初始化失败');
+        throw new AIServiceError('ClaudeCode 服务未配置或初始化失败');
       }
     }
 
@@ -529,7 +537,7 @@ class ClaudeCodeService implements IAIService {
         : prompt;
 
       const message = await this.client.messages.create({
-        model: 'claude-3-sonnet-20240229',
+        model: ConfigManager.get('CLAUDE_MODEL', 'claude-3-sonnet-20240229'),
         max_tokens: 4000,
         messages: [
           {
@@ -543,7 +551,7 @@ class ClaudeCodeService implements IAIService {
         message.content[0]?.type === 'text' ? message.content[0].text : '';
 
       if (!text || text.trim().length === 0) {
-        throw new Error('ClaudeCode 返回空响应');
+        throw new AIServiceError('ClaudeCode 返回空响应');
       }
 
       logger.debug('ClaudeCode API 调用成功', {
@@ -557,7 +565,7 @@ class ClaudeCodeService implements IAIService {
         'ClaudeCode API 调用失败',
         error instanceof Error ? error : new Error(String(error)),
       );
-      throw new Error(
+      throw new AIServiceError(
         `ClaudeCode API 调用失败: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
@@ -659,7 +667,7 @@ class SmartAIManager {
     if (!ConfigManager.isAutoSwitchEnabled()) {
       const service = this.services.get(primaryService);
       if (!service) {
-        throw new Error(`不支持的AI服务: ${primaryService}`);
+        throw new AIServiceError(`不支持的AI服务: ${primaryService}`);
       }
 
       const result = await service.callAPI(prompt, additionalPrompt);
@@ -728,7 +736,7 @@ class SmartAIManager {
       errors,
     });
 
-    throw new Error(`所有AI服务都不可用。错误详情: ${errorSummary}`);
+    throw new AIServiceError(`所有AI服务都不可用。错误详情: ${errorSummary}`);
   }
 
   /**
@@ -856,75 +864,59 @@ export class CodeRocketService {
     output: string,
     aiService: AIService,
   ): ReviewResult {
-    const lines = output.split('\n');
-    let status: ReviewStatus = '🔍';
-    let summary = '';
-    let details = output;
+    try {
+      // 尝试将输出解析为JSON
+      const result = JSON.parse(output);
+      return {
+        status: result.status || '🔍',
+        summary: result.summary || '代码审查完成',
+        details: result.details || output,
+        ai_service_used: aiService,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      // 如果JSON解析失败，回退到基于关键字的解析
+      const lines = output.split('\n');
+      let status: ReviewStatus = '🔍';
+      let summary = '';
 
-    // 尝试从输出中提取状态
-    for (const line of lines) {
-      const lowerLine = line.toLowerCase();
-      if (
-        line.includes('✅') ||
-        lowerLine.includes('通过') ||
-        lowerLine.includes('优秀')
-      ) {
-        status = '✅';
-        break;
-      } else if (
-        line.includes('⚠️') ||
-        lowerLine.includes('警告') ||
-        lowerLine.includes('需改进')
-      ) {
-        status = '⚠️';
-        break;
-      } else if (
-        line.includes('❌') ||
-        lowerLine.includes('失败') ||
-        lowerLine.includes('有问题')
-      ) {
-        status = '❌';
-        break;
-      } else if (
-        line.includes('🔍') ||
-        lowerLine.includes('调查') ||
-        lowerLine.includes('需调查')
-      ) {
-        status = '🔍';
-        break;
-      }
-    }
-
-    // 提取摘要（通常是第一段非空内容）
-    const nonEmptyLines = lines.filter(line => line.trim());
-    if (nonEmptyLines.length > 0) {
-      // 寻找总体评价或摘要部分
-      let summaryLine = nonEmptyLines[0];
-      for (const line of nonEmptyLines) {
-        if (
-          line.includes('总体评价') ||
-          line.includes('审查摘要') ||
-          line.includes('摘要')
-        ) {
-          const nextIndex = nonEmptyLines.indexOf(line) + 1;
-          if (nextIndex < nonEmptyLines.length) {
-            summaryLine = nonEmptyLines[nextIndex];
-            break;
-          }
+      for (const line of lines) {
+        const lowerLine = line.toLowerCase();
+        if (line.includes('✅') || lowerLine.includes('通过') || lowerLine.includes('优秀')) {
+          status = '✅';
+          break;
+        } else if (line.includes('⚠️') || lowerLine.includes('警告') || lowerLine.includes('需改进')) {
+          status = '⚠️';
+          break;
+        } else if (line.includes('❌') || lowerLine.includes('失败') || lowerLine.includes('有问题')) {
+          status = '❌';
+          break;
         }
       }
 
-      summary =
-        summaryLine.substring(0, 200) + (summaryLine.length > 200 ? '...' : '');
-    }
+      const nonEmptyLines = lines.filter(line => line.trim());
+      if (nonEmptyLines.length > 0) {
+        let summaryLine = nonEmptyLines[0];
+        for (const line of nonEmptyLines) {
+          if (line.includes('总体评价') || line.includes('审查摘要') || line.includes('摘要')) {
+            const nextIndex = nonEmptyLines.indexOf(line) + 1;
+            if (nextIndex < nonEmptyLines.length) {
+              summaryLine = nonEmptyLines[nextIndex];
+              break;
+            }
+          }
+        }
+        summary = summaryLine.substring(0, 200) + (summaryLine.length > 200 ? '...' : '');
+      }
 
-    return {
-      status,
-      summary: summary || '代码审查完成',
-      details,
-      ai_service_used: aiService,
-      timestamp: new Date().toISOString(),
-    };
+      return {
+        status,
+        summary: summary || '代码审查完成',
+        details: output,
+        ai_service_used: aiService,
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 
   /**
@@ -1002,7 +994,7 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
       // 检查是否为Git仓库
       const isGitRepo = await this.checkGitRepository(repositoryPath);
       if (!isGitRepo) {
-        throw new Error(`指定路径不是Git仓库: ${repositoryPath}`);
+        throw new GitError(`指定路径不是Git仓库: ${repositoryPath}`);
       }
 
       // 获取Git变更信息
@@ -1106,7 +1098,7 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
         '获取Git变更信息失败',
         error instanceof Error ? error : new Error(String(error)),
       );
-      throw new Error(
+      throw new GitError(
         `无法获取Git变更信息: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
@@ -1260,7 +1252,7 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
       );
 
       if (!commitInfo.trim()) {
-        throw new Error(`无法获取提交信息: ${commitHash}`);
+        throw new GitError(`无法获取提交信息: ${commitHash}`);
       }
 
       // 构建审查提示词
@@ -1328,9 +1320,7 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
           const content = await readFile(fullPath, 'utf-8');
 
           // 限制单个文件内容长度，避免提示词过长
-          const FILE_CONTENT_CHAR_LIMIT = process.env.FILE_CONTENT_CHAR_LIMIT
-            ? parseInt(process.env.FILE_CONTENT_CHAR_LIMIT, 10)
-            : 5000;
+          const FILE_CONTENT_CHAR_LIMIT = parseInt(ConfigManager.get('FILE_CONTENT_CHAR_LIMIT', '5000'), 10);
 
           let truncatedContent: string;
           if (content.length > FILE_CONTENT_CHAR_LIMIT) {
@@ -1394,6 +1384,172 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
         error instanceof Error ? error : new Error(String(error)),
       );
       throw errorHandler.handleError(error, 'reviewFiles');
+    }
+  }
+
+  /**
+   * 配置AI服务
+   */
+  async configureAIService(request: ConfigureAIServiceRequest): Promise<ConfigureAIServiceResponse> {
+    try {
+      await this.ensureInitialized();
+      logger.info('开始配置AI服务', { service: request.service, scope: request.scope });
+
+      // 验证服务参数
+      const supportedServices = ['gemini', 'claudecode'];
+      if (!supportedServices.includes(request.service)) {
+        throw new Error(`不支持的AI服务: ${request.service}。支持的服务: ${supportedServices.join(', ')}`);
+      }
+
+      // 确定配置路径
+      const configPathInfo = ConfigManager.getConfigPath(request.scope || 'project');
+      const configPath = configPathInfo.file; // file 字段已经是完整路径
+      const configDir = configPathInfo.dir;
+
+      // 创建配置目录（如果不存在）
+      if (!existsSync(configDir)) {
+        await mkdir(configDir, { recursive: true });
+        logger.info('创建配置目录', { path: configDir });
+      }
+
+      // 读取现有配置（如果存在）
+      let existingConfig: Record<string, string> = {};
+      if (existsSync(configPath)) {
+        try {
+          const content = await readFile(configPath, 'utf-8');
+          // 解析.env文件内容
+          existingConfig = ConfigManager.parseEnvContent(content);
+        } catch (error) {
+          logger.warn('读取现有配置失败，将创建新配置', { error: error instanceof Error ? error.message : String(error) });
+        }
+      }
+
+      // 更新配置对象
+      const updatedConfig = { ...existingConfig };
+      let configChanged = false;
+
+      if (request.api_key !== undefined) {
+        const keyName = request.service === 'gemini' ? 'GEMINI_API_KEY' : 'CLAUDE_API_KEY';
+        updatedConfig[keyName] = request.api_key;
+        configChanged = true;
+        logger.info('更新API密钥配置', { service: request.service });
+      }
+
+      if (request.timeout !== undefined) {
+        updatedConfig.AI_TIMEOUT = request.timeout.toString();
+        configChanged = true;
+        logger.info('更新超时配置', { timeout: request.timeout });
+      }
+
+      if (request.max_retries !== undefined) {
+        updatedConfig.AI_MAX_RETRIES = request.max_retries.toString();
+        configChanged = true;
+        logger.info('更新重试次数配置', { maxRetries: request.max_retries });
+      }
+
+      // 设置默认服务
+      if (!updatedConfig.AI_SERVICE) {
+        updatedConfig.AI_SERVICE = request.service;
+        configChanged = true;
+      }
+
+      if (!configChanged) {
+        return {
+          success: true,
+          message: '没有新的配置需要更新',
+          config_path: configPath,
+          restart_required: false,
+        };
+      }
+
+      // 生成.env格式的配置内容
+      const configContent = Object.entries(updatedConfig)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('\n') + '\n';
+
+      // 写入配置文件
+      await writeFile(configPath, configContent, 'utf-8');
+      logger.info('配置文件写入成功', { path: configPath });
+
+      return {
+        success: true,
+        message: `AI服务 ${request.service} 配置成功`,
+        config_path: configPath,
+        restart_required: true,
+      };
+
+    } catch (error) {
+      logger.error(
+        'AI服务配置失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      throw errorHandler.handleError(error, 'configureAIService');
+    }
+  }
+
+  /**
+   * 获取AI服务状态
+   */
+  async getAIServiceStatus(request: GetAIServiceStatusRequest): Promise<GetAIServiceStatusResponse> {
+    try {
+      await this.ensureInitialized();
+      logger.info('开始获取AI服务状态');
+
+      // 获取基础服务状态
+      const servicesStatus = await this.aiManager.getServicesStatus();
+
+      // 增强服务状态信息
+      const enhancedServices = servicesStatus.map(service => {
+        // 检查API密钥配置
+        const apiKey = ConfigManager.getAPIKey(service.service);
+        const isConfigured = !!apiKey;
+
+        // 为未配置的服务添加配置指令
+        let configCommand: string | undefined;
+        let installCommand: string | undefined;
+
+        if (!isConfigured) {
+          if (service.service === 'gemini') {
+            configCommand = 'Set GEMINI_API_KEY in your environment or .env file';
+            installCommand = 'Visit https://makersuite.google.com/app/apikey to get your API key';
+          } else if (service.service === 'claudecode') {
+            configCommand = 'Set CLAUDE_API_KEY in your environment or .env file';
+            installCommand = 'Visit https://console.anthropic.com/ to get your API key';
+          }
+        }
+
+        return {
+          ...service,
+          configured: isConfigured,
+          install_command: installCommand,
+          config_command: configCommand,
+        };
+      });
+
+      // 获取当前服务和自动切换状态
+      const currentService = ConfigManager.getAIService();
+      const autoSwitchEnabled = ConfigManager.isAutoSwitchEnabled();
+
+      const response: GetAIServiceStatusResponse = {
+        services: enhancedServices,
+        current_service: currentService,
+        auto_switch_enabled: autoSwitchEnabled,
+      };
+
+      logger.info('AI服务状态获取成功', { 
+        serviceCount: enhancedServices.length,
+        currentService,
+        autoSwitchEnabled 
+      });
+
+      return response;
+
+    } catch (error) {
+      logger.error(
+        'AI服务状态获取失败',
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      throw errorHandler.handleError(error, 'getAIServiceStatus');
     }
   }
 

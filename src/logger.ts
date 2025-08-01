@@ -2,6 +2,28 @@ import { writeFile, appendFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
+// 自定义错误类型
+export class AIServiceError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AIServiceError';
+  }
+}
+
+export class GitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GitError';
+  }
+}
+
+export class FileError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'FileError';
+  }
+}
+
 /**
  * 日志级别
  */
@@ -213,18 +235,15 @@ export class ErrorHandler {
     let errorCode = 'UNKNOWN_ERROR';
     let userSuggestions = suggestions || [];
 
-    if (error.message.includes('Shell command failed')) {
-      errorCode = 'SHELL_COMMAND_ERROR';
+    if (error instanceof GitError) {
+      errorCode = 'GIT_ERROR';
       userSuggestions = [
-        '验证AI服务是否已配置',
-        '检查API密钥是否正确设置',
-        '确保有足够的权限执行命令',
+        '确保在Git仓库中执行',
+        '检查Git仓库状态',
+        '验证提交哈希是否存在',
         ...userSuggestions,
       ];
-    } else if (
-      error.message.includes('AI服务') ||
-      error.message.includes('AI service')
-    ) {
+    } else if (error instanceof AIServiceError) {
       errorCode = 'AI_SERVICE_ERROR';
       userSuggestions = [
         '检查AI服务配置',
@@ -233,10 +252,7 @@ export class ErrorHandler {
         '尝试切换到其他AI服务',
         ...userSuggestions,
       ];
-    } else if (
-      error.message.includes('文件') ||
-      error.message.includes('file')
-    ) {
+    } else if (error instanceof FileError) {
       errorCode = 'FILE_ERROR';
       userSuggestions = [
         '检查文件路径是否正确',
@@ -244,12 +260,12 @@ export class ErrorHandler {
         '验证文件权限',
         ...userSuggestions,
       ];
-    } else if (error.message.includes('Git') || error.message.includes('git')) {
-      errorCode = 'GIT_ERROR';
+    } else if (error.message.includes('Shell command failed')) {
+      errorCode = 'SHELL_COMMAND_ERROR';
       userSuggestions = [
-        '确保在Git仓库中执行',
-        '检查Git仓库状态',
-        '验证提交哈希是否存在',
+        '验证AI服务是否已配置',
+        '检查API密钥是否正确',
+        '确保有足够的权限执行命令',
         ...userSuggestions,
       ];
     }
