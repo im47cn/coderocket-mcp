@@ -89,15 +89,21 @@ export class Logger {
       error,
     };
 
-    // 输出到控制台（所有日志都输出到 stderr 以避免污染 MCP 协议的 stdout）
-    const levelName = LogLevel[level];
-    const contextStr = context ? ` ${JSON.stringify(context)}` : '';
-    const errorStr = error ? ` Error: ${error.message}` : '';
+    // 在 MCP 服务器模式下，只有在 DEBUG 模式或 WARN/ERROR 级别时才输出到控制台
+    // 这避免了 IDE 误认为 INFO 级别的日志是错误信息
+    const shouldOutputToConsole =
+      process.env.DEBUG === 'true' || level >= LogLevel.WARN;
 
-    // 在 MCP 模式下，所有日志都应该输出到 stderr
-    console.error(
-      `[${entry.timestamp}] ${levelName}: ${message}${contextStr}${errorStr}`,
-    );
+    if (shouldOutputToConsole) {
+      const levelName = LogLevel[level];
+      const contextStr = context ? ` ${JSON.stringify(context)}` : '';
+      const errorStr = error ? ` Error: ${error.message}` : '';
+
+      // 所有控制台输出都使用 stderr 以避免污染 MCP 协议的 stdout
+      console.error(
+        `[${entry.timestamp}] ${levelName}: ${message}${contextStr}${errorStr}`,
+      );
+    }
 
     // 写入日志文件
     if (this.logFile) {

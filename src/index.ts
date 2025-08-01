@@ -228,14 +228,23 @@ class CodeRocketMCPServer {
         './coderocket.js'
       );
       await ConfigManager.initialize();
-      showSuccessBanner('配置系统初始化完成');
+
+      // 在 MCP 服务器模式下，禁用 banner 输出以避免 IDE 误认为启动失败
+      // 只有在 DEBUG 模式下才显示启动信息
+      if (process.env.DEBUG === 'true') {
+        showSuccessBanner('配置系统初始化完成');
+      }
 
       // 现在可以安全地初始化 CodeRocketService
       this.codeRocketService = new CodeRocketService();
 
       const transport = new StdioServerTransport();
       await this.server.connect(transport);
-      showStartupInfo();
+
+      // 在 MCP 服务器模式下，禁用启动信息输出
+      if (process.env.DEBUG === 'true') {
+        showStartupInfo();
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
