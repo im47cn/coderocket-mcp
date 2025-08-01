@@ -49,7 +49,7 @@ function createJsonSchemas() {
  */
 class CodeRocketMCPServer {
   private server: Server;
-  private codeRocketService: CodeRocketService;
+  private codeRocketService: CodeRocketService | null = null;
 
   constructor() {
     // 读取实际版本号
@@ -74,7 +74,7 @@ class CodeRocketMCPServer {
       },
     );
 
-    this.codeRocketService = new CodeRocketService();
+    // 延迟初始化 CodeRocketService，等待 ConfigManager 初始化完成
     this.setupToolHandlers();
   }
 
@@ -97,6 +97,11 @@ class CodeRocketMCPServer {
     // 注册工具调用处理器
     this.server.setRequestHandler(CallToolRequestSchema, async request => {
       const { name, arguments: args } = request.params;
+
+      // 确保 CodeRocketService 已初始化
+      if (!this.codeRocketService) {
+        throw new Error('CodeRocketService 未初始化，请稍后重试');
+      }
 
       try {
         switch (name) {
@@ -214,9 +219,12 @@ class CodeRocketMCPServer {
   async run() {
     try {
       // 预先初始化配置系统
-      const { ConfigManager } = await import('./coderocket.js');
+      const { ConfigManager, CodeRocketService } = await import('./coderocket.js');
       await ConfigManager.initialize();
       showSuccessBanner('配置系统初始化完成');
+
+      // 现在可以安全地初始化 CodeRocketService
+      this.codeRocketService = new CodeRocketService();
 
       const transport = new StdioServerTransport();
       await this.server.connect(transport);
