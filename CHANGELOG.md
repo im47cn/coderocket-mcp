@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.7] - 2025-08-01
+
+### 🔧 关键修复：ConfigManager 初始化时序
+
+#### Fixed
+- **关键修复**：修复了 ConfigManager 初始化时序问题，解决了 MCP 服务器启动失败的问题
+- 延迟 CodeRocketService 初始化到 ConfigManager 初始化完成之后
+- 添加了 CodeRocketService 空值检查，提高了错误处理的健壮性
+- 修复了工具列表无法正常显示的问题
+
+#### Technical Improvements
+- 优化了 MCP 服务器的启动流程，确保组件按正确顺序初始化
+- 改进了错误处理机制，提供更清晰的错误信息
+- 增强了服务器稳定性和可靠性
+
 ## [1.2.5] - 2025-08-01
 
 ### ✨ 统一提示词系统

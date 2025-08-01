@@ -132,7 +132,7 @@ npx -y @yeepay/coderocket-mcp test
   "mcpServers": {
     "coderocket": {
       "command": "npx",
-      "args": ["-y", "@yeepay/coderocket-mcp"],
+      "args": ["-y", "@yeepay/coderocket-mcp@latest"],
       "env": {
         "GEMINI_API_KEY": "your_gemini_api_key"
       }
