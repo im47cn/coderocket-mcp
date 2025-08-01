@@ -1,12 +1,10 @@
-import { spawn, exec } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
-import { writeFile, readFile, mkdir, access } from 'fs/promises';
-import fs from 'fs';
+import { writeFile, readFile, mkdir } from 'fs/promises';
 import { join, dirname, resolve } from 'path';
-import { tmpdir, homedir } from 'os';
+import { homedir } from 'os';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Anthropic from '@anthropic-ai/sdk';
-import axios from 'axios';
 import {
   ReviewCodeRequest,
   ReviewChangesRequest,
@@ -454,7 +452,7 @@ class GeminiService implements IAIService {
   private async initialize(): Promise<void> {
     // 检查 ConfigManager 是否已初始化
     if (!(ConfigManager as any).initialized) {
-      return; // 如果未初始化，跳过初始化
+      throw new Error('ConfigManager 未初始化，请先调用 ConfigManager.initialize()');
     }
 
     const apiKey = ConfigManager.getAPIKey('gemini');
@@ -1277,9 +1275,23 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}
           const content = await readFile(fullPath, 'utf-8');
 
           // 限制单个文件内容长度，避免提示词过长
-          const truncatedContent = content.length > 5000
-            ? content.substring(0, 5000) + '\n... (内容已截断)'
-            : content;
+          const FILE_CONTENT_CHAR_LIMIT = process.env.FILE_CONTENT_CHAR_LIMIT
+            ? parseInt(process.env.FILE_CONTENT_CHAR_LIMIT, 10)
+            : 5000;
+
+          let truncatedContent: string;
+          if (content.length > FILE_CONTENT_CHAR_LIMIT) {
+            // 取前后各 100 字符作为摘要
+            const head = content.substring(0, 100);
+            const tail = content.substring(content.length - 100);
+            const omittedLength = content.length - FILE_CONTENT_CHAR_LIMIT;
+            truncatedContent =
+              content.substring(0, FILE_CONTENT_CHAR_LIMIT) +
+              `\n... (内容已截断, 共省略 ${omittedLength} 字符)\n` +
+              `内容摘要: \n前100字符: ${head}\n后100字符: ${tail}`;
+          } else {
+            truncatedContent = content;
+          }
 
           fileContents.push(`## 文件: ${filePath}\n\`\`\`\n${truncatedContent}\n\`\`\``);
         } catch (error) {
@@ -1430,9 +1442,8 @@ ${request.custom_prompt ? `\n附加要求：\n${request.custom_prompt}` : ''}`;
         lines.push(configLine);
       }
 
-      // 写入配置文件
-      const newConfig = lines.filter(line => line.trim()).join('\n') + '\n';
-      await writeFile(configFile, newConfig, 'utf-8');
+      // 写回文件
+      await writeFile(configFile, lines.join('\n'), 'utf-8');
 
       logger.debug('配置已保存', { key, configFile, scope });
     } catch (error) {
