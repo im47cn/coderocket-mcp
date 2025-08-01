@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // AI服务类型
-export const AIServiceSchema = z.enum(['gemini', 'opencode', 'claudecode']);
+export const AIServiceSchema = z.enum(['gemini', 'claudecode']);
 export type AIService = z.infer<typeof AIServiceSchema>;
 
 // 审查状态

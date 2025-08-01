@@ -142,4 +142,7 @@ vite.config.ts.timestamp-*
 .idea/misc.xml
 .idea/modules.xml
 .idea/vcs.xml
+
+# Crush
+.crush
 .idea/inspectionProfiles/Project_Default.xml

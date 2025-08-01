@@ -71,13 +71,12 @@ CodeRocket MCP - 独立的AI驱动代码审查服务器
   npx @yeepay/coderocket-mcp help   # 显示帮助
 
 环境变量配置:
-  AI_SERVICE              默认AI服务 (gemini/claudecode/opencode)
+  AI_SERVICE              默认AI服务 (gemini/claudecode)
   AI_AUTO_SWITCH          启用自动切换 (true/false)
   AI_TIMEOUT              超时时间（秒，默认30）
   AI_MAX_RETRIES          最大重试次数（默认3）
   GEMINI_API_KEY          Gemini API密钥
   CLAUDECODE_API_KEY      ClaudeCode API密钥
-  OPENCODE_API_KEY        OpenCode API密钥
   NODE_ENV                环境模式 (development/production)
   DEBUG                   调试模式 (true/false)
 

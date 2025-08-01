@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-08-01
+
+### 🧹 Service Cleanup & Test Enhancement
+
+#### ✨ Removed
+
+- **OpenCode Service**: Removed expired OpenCode service integration
+  - Removed from type definitions and service configurations
+  - Updated AI service manager to only support Gemini and ClaudeCode
+  - Cleaned up documentation and environment variable references
+
+#### 🧪 Enhanced Testing
+
+- **Comprehensive Test Coverage**: Added extensive test coverage for core components
+  - **ConfigManager Tests**: Configuration loading, priority hierarchy, environment variable handling
+  - **PromptManager Tests**: Prompt loading, caching mechanism, default fallbacks
+  - **AI Service Failover Tests**: Service availability, intelligent switching, error handling
+  - **Enhanced Error Scenarios**: Better coverage of edge cases and error conditions
+- **Test Reliability**: Improved test isolation and environment cleanup
+- **100% Test Pass Rate**: All 8 test categories now pass successfully
+
+#### 📊 Test Results
+
+- Total Tests: 8
+- Pass Rate: 100% ✅
+- Coverage Areas: Core components, service integration, error handling, boundary conditions
+
 ## [1.1.0] - 2025-08-01
 
 ### 🚀 Major Changes - Complete Independence

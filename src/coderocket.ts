@@ -159,7 +159,6 @@ export class ConfigManager {
   static getAPIKeyEnvVar(service: AIService): string {
     const envVarMap: Record<AIService, string> = {
       gemini: 'GEMINI_API_KEY',
-      opencode: 'OPENCODE_API_KEY',
       claudecode: 'CLAUDECODE_API_KEY',
     };
     return envVarMap[service];
@@ -178,7 +177,7 @@ export class ConfigManager {
    */
   static getAIService(): AIService {
     const service = this.get('AI_SERVICE', 'gemini').toLowerCase();
-    if (['gemini', 'opencode', 'claudecode'].includes(service)) {
+    if (['gemini', 'claudecode'].includes(service)) {
       return service as AIService;
     }
     return 'gemini';
@@ -242,7 +241,7 @@ export class ConfigManager {
  * 1. 项目级 prompts/ 目录（优先级高）
  * 2. 全局 ~/.coderocket/prompts/ 目录（优先级低）
  */
-class PromptManager {
+export class PromptManager {
   private static promptCache: Map<string, string> = new Map();
 
   /**
@@ -565,95 +564,7 @@ class ClaudeCodeService implements IAIService {
   }
 }
 
-/**
- * OpenCode AI 服务实现
- * 注意：这是一个模拟实现，实际的 OpenCode API 可能需要不同的调用方式
- */
-class OpenCodeService implements IAIService {
-  private apiKey: string = '';
-  private baseURL: string = 'https://api.opencode.com/v1'; // 假设的API端点
 
-  constructor() {
-    this.initialize();
-  }
-
-  private async initialize(): Promise<void> {
-    this.apiKey = ConfigManager.getAPIKey('opencode');
-    if (this.apiKey) {
-      logger.debug('OpenCode 服务初始化成功');
-    }
-  }
-
-  async callAPI(prompt: string, additionalPrompt?: string): Promise<string> {
-    if (!this.apiKey) {
-      await this.initialize();
-      if (!this.apiKey) {
-        throw new Error('OpenCode 服务未配置或初始化失败');
-      }
-    }
-
-    try {
-      const fullPrompt = additionalPrompt ? `${prompt}\n\n${additionalPrompt}` : prompt;
-
-      // 注意：这是一个模拟的API调用，实际的OpenCode API可能不同
-      const response = await axios.post(`${this.baseURL}/chat/completions`, {
-        model: 'opencode-latest',
-        messages: [
-          {
-            role: 'user',
-            content: fullPrompt
-          }
-        ],
-        max_tokens: 4000,
-        temperature: 0.7
-      }, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: ConfigManager.getTimeout() * 1000
-      });
-
-      const text = response.data?.choices?.[0]?.message?.content || '';
-
-      if (!text || text.trim().length === 0) {
-        throw new Error('OpenCode 返回空响应');
-      }
-
-      logger.debug('OpenCode API 调用成功', {
-        promptLength: fullPrompt.length,
-        responseLength: text.length
-      });
-
-      return text.trim();
-    } catch (error) {
-      logger.error('OpenCode API 调用失败', error instanceof Error ? error : new Error(String(error)));
-
-      // 如果是网络错误或API不可用，提供友好的错误信息
-      if (axios.isAxiosError(error)) {
-        if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-          throw new Error('OpenCode 服务暂时不可用，请检查网络连接或稍后重试');
-        }
-        if (error.response?.status === 401) {
-          throw new Error('OpenCode API 密钥无效，请检查配置');
-        }
-        if (error.response?.status === 429) {
-          throw new Error('OpenCode API 调用频率超限，请稍后重试');
-        }
-      }
-
-      throw new Error(`OpenCode API 调用失败: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  isConfigured(): boolean {
-    return !!ConfigManager.getAPIKey('opencode');
-  }
-
-  getServiceName(): AIService {
-    return 'opencode';
-  }
-}
 
 /**
  * 智能 AI 服务管理器
@@ -672,7 +583,6 @@ class SmartAIManager {
     // 初始化所有AI服务
     this.services.set('gemini', new GeminiService());
     this.services.set('claudecode', new ClaudeCodeService());
-    this.services.set('opencode', new OpenCodeService());
 
     // 设置服务优先级顺序
     this.updateServiceOrder();
@@ -680,7 +590,7 @@ class SmartAIManager {
 
   private updateServiceOrder(): void {
     const primaryService = ConfigManager.getAIService();
-    const allServices: AIService[] = ['gemini', 'claudecode', 'opencode'];
+    const allServices: AIService[] = ['gemini', 'claudecode'];
 
     // 将主要服务放在第一位，其他服务按配置状态排序
     this.serviceOrder = [primaryService];
