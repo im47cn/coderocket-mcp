@@ -114,9 +114,9 @@
 {
   "tool": "configure_ai_service",
   "arguments": {
-    "service": "opencode",
+    "service": "gemini",
     "scope": "project",
-    "api_key": "your_opencode_api_key",
+    "api_key": "your_gemini_api_key",
     "timeout": 60
   }
 }
@@ -144,12 +144,6 @@
       "service": "gemini",
       "available": true,
       "configured": true
-    },
-    {
-      "service": "opencode",
-      "available": true,
-      "configured": false,
-      "config_command": "opencode config"
     },
     {
       "service": "claudecode",

@@ -110,7 +110,7 @@ export class ConfigManager {
   private static loadEnvironmentVariables(): void {
     const envKeys = [
       'AI_SERVICE', 'AI_AUTO_SWITCH', 'AI_TIMEOUT', 'AI_MAX_RETRIES', 'AI_RETRY_DELAY',
-      'GEMINI_API_KEY', 'OPENCODE_API_KEY', 'CLAUDECODE_API_KEY',
+      'GEMINI_API_KEY', 'CLAUDECODE_API_KEY',
       'NODE_ENV', 'DEBUG'
     ];
 

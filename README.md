@@ -109,9 +109,6 @@ npx @yeepay/coderocket-mcp review_changes
 # 配置Gemini（推荐）
 export GEMINI_API_KEY="your_gemini_api_key"
 
-# 或配置OpenCode
-export OPENCODE_API_KEY="your_opencode_api_key"
-
 # 或配置ClaudeCode
 export CLAUDECODE_API_KEY="your_claudecode_api_key"
 ```
@@ -198,7 +195,7 @@ CodeRocket MCP 提供以下工具：
 配置AI服务设置，包括服务选择、API密钥等。
 
 **参数：**
-- `service` (string): AI服务名称 (gemini/opencode/claudecode)
+- `service` (string): AI服务名称 (gemini/claudecode)
 - `scope` (string, 可选): 配置范围 (project/global)
 - `api_key` (string, 可选): API密钥
 - `timeout` (number, 可选): 超时时间
@@ -222,7 +219,6 @@ AI_MAX_RETRIES=3                     # 最大重试次数
 
 # API密钥
 GEMINI_API_KEY=your_gemini_key
-OPENCODE_API_KEY=your_opencode_key
 CLAUDECODE_API_KEY=your_claudecode_key
 
 # 日志配置
@@ -308,7 +304,6 @@ npm run build
 # 检查API密钥配置
 echo $GEMINI_API_KEY
 echo $CLAUDECODE_API_KEY
-echo $OPENCODE_API_KEY
 
 # 检查配置文件
 cat ~/.coderocket/env

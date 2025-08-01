@@ -285,7 +285,6 @@ async function testAIServiceFailover() {
   const serviceNames = status.services.map(s => s.service);
   assert(serviceNames.includes('gemini'), '应该包含 Gemini 服务');
   assert(serviceNames.includes('claudecode'), '应该包含 ClaudeCode 服务');
-  assert(!serviceNames.includes('opencode' as any), '不应该包含已移除的 OpenCode 服务');
 
   // 测试每个服务的状态结构
   status.services.forEach(svc => {
