@@ -58,43 +58,43 @@ function getVersion(): string {
  * 显示长版本 Banner（宽终端使用）
  */
 function showLongBanner(): void {
-  console.log('');
-  console.log(`${colors.GRAD_1} ███            ██████  ██████  ██████  ███████ ██████   ██████   ██████ ██   ██ ███████ ████████ ${colors.NC}`);
-  console.log(`${colors.GRAD_2}░░░███         ██      ██    ██ ██   ██ ██      ██   ██ ██    ██ ██      ██  ██  ██         ██    ${colors.NC}`);
-  console.log(`${colors.GRAD_3}  ░░░███       ██      ██    ██ ██   ██ █████   ██████  ██    ██ ██      █████   █████      ██    ${colors.NC}`);
-  console.log(`${colors.GRAD_4}    ░░░███     ██      ██    ██ ██   ██ ██      ██   ██ ██    ██ ██      ██  ██  ██         ██    ${colors.NC}`);
-  console.log(`${colors.GRAD_5}     ███░       ██████  ██████  ██████  ███████ ██   ██  ██████   ██████ ██   ██ ███████    ██    ${colors.NC}`);
-  console.log(`${colors.GRAD_6}   ███░                                                                                            ${colors.NC}`);
-  console.log(`${colors.GRAD_1} ███░                                                                                              ${colors.NC}`);
-  console.log(`${colors.GRAD_2}░░░                                                                                                ${colors.NC}`);
-  console.log('');
+  console.error('');
+  console.error(`${colors.GRAD_1} ███            ██████  ██████  ██████  ███████ ██████   ██████   ██████ ██   ██ ███████ ████████ ${colors.NC}`);
+  console.error(`${colors.GRAD_2}░░░███         ██      ██    ██ ██   ██ ██      ██   ██ ██    ██ ██      ██  ██  ██         ██    ${colors.NC}`);
+  console.error(`${colors.GRAD_3}  ░░░███       ██      ██    ██ ██   ██ █████   ██████  ██    ██ ██      █████   █████      ██    ${colors.NC}`);
+  console.error(`${colors.GRAD_4}    ░░░███     ██      ██    ██ ██   ██ ██      ██   ██ ██    ██ ██      ██  ██  ██         ██    ${colors.NC}`);
+  console.error(`${colors.GRAD_5}     ███░       ██████  ██████  ██████  ███████ ██   ██  ██████   ██████ ██   ██ ███████    ██    ${colors.NC}`);
+  console.error(`${colors.GRAD_6}   ███░                                                                                            ${colors.NC}`);
+  console.error(`${colors.GRAD_1} ███░                                                                                              ${colors.NC}`);
+  console.error(`${colors.GRAD_2}░░░                                                                                                ${colors.NC}`);
+  console.error('');
 
   // 版本和服务信息
   const version = getVersion();
-  console.log(`${colors.GRAD_5}🚀 AI 驱动的代码审查 MCP 服务器${colors.NC}`);
-  console.log(`${colors.GRAY}版本: v${version}${colors.NC}`);
-  console.log(`${colors.GRAY}协议: Model Context Protocol (MCP)${colors.NC}`);
-  console.log('');
+  console.error(`${colors.GRAD_5}🚀 AI 驱动的代码审查 MCP 服务器${colors.NC}`);
+  console.error(`${colors.GRAY}版本: v${version}${colors.NC}`);
+  console.error(`${colors.GRAY}协议: Model Context Protocol (MCP)${colors.NC}`);
+  console.error('');
 }
 
 /**
  * 显示短版本 Banner（窄终端使用）
  */
 function showShortBanner(): void {
-  console.log('');
-  console.log(`${colors.GRAD_1} ██████  ██████  ██████  ███████ ██████   ██████   ██████ ██   ██ ███████ ████████ ${colors.NC}`);
-  console.log(`${colors.GRAD_2}██      ██    ██ ██   ██ ██      ██   ██ ██    ██ ██      ██  ██  ██         ██    ${colors.NC}`);
-  console.log(`${colors.GRAD_3}██      ██    ██ ██   ██ █████   ██████  ██    ██ ██      █████   █████      ██    ${colors.NC}`);
-  console.log(`${colors.GRAD_4}██      ██    ██ ██   ██ ██      ██   ██ ██    ██ ██      ██  ██  ██         ██    ${colors.NC}`);
-  console.log(`${colors.GRAD_5} ██████  ██████  ██████  ███████ ██   ██  ██████   ██████ ██   ██ ███████    ██    ${colors.NC}`);
-  console.log('');
+  console.error('');
+  console.error(`${colors.GRAD_1} ██████  ██████  ██████  ███████ ██████   ██████   ██████ ██   ██ ███████ ████████ ${colors.NC}`);
+  console.error(`${colors.GRAD_2}██      ██    ██ ██   ██ ██      ██   ██ ██    ██ ██      ██  ██  ██         ██    ${colors.NC}`);
+  console.error(`${colors.GRAD_3}██      ██    ██ ██   ██ █████   ██████  ██    ██ ██      █████   █████      ██    ${colors.NC}`);
+  console.error(`${colors.GRAD_4}██      ██    ██ ██   ██ ██      ██   ██ ██    ██ ██      ██  ██  ██         ██    ${colors.NC}`);
+  console.error(`${colors.GRAD_5} ██████  ██████  ██████  ███████ ██   ██  ██████   ██████ ██   ██ ███████    ██    ${colors.NC}`);
+  console.error('');
 
   // 版本和服务信息
   const version = getVersion();
-  console.log(`${colors.GRAD_5}🚀 AI 驱动的代码审查 MCP 服务器${colors.NC}`);
-  console.log(`${colors.GRAY}版本: v${version}${colors.NC}`);
-  console.log(`${colors.GRAY}协议: Model Context Protocol (MCP)${colors.NC}`);
-  console.log('');
+  console.error(`${colors.GRAD_5}🚀 AI 驱动的代码审查 MCP 服务器${colors.NC}`);
+  console.error(`${colors.GRAY}版本: v${version}${colors.NC}`);
+  console.error(`${colors.GRAY}协议: Model Context Protocol (MCP)${colors.NC}`);
+  console.error('');
 }
 
 /**
@@ -102,7 +102,7 @@ function showShortBanner(): void {
  */
 function showMiniBanner(): void {
   const version = getVersion();
-  console.log(`${colors.GRAD_3}CodeRocket MCP v${version} 🚀 - AI 驱动的代码审查服务器${colors.NC}`);
+  console.error(`${colors.GRAD_3}CodeRocket MCP v${version} 🚀 - AI 驱动的代码审查服务器${colors.NC}`);
 }
 
 /**
@@ -123,30 +123,30 @@ function showBanner(): void {
  */
 function showStartupInfo(): void {
   showBanner();
-  console.log(`${colors.YELLOW}💡 MCP 服务器信息：${colors.NC}`);
-  console.log(`${colors.WHITE}  • 支持自动Git变更审查 (review_changes)${colors.NC}`);
-  console.log(`${colors.WHITE}  • 支持代码片段审查 (review_code)${colors.NC}`);
-  console.log(`${colors.WHITE}  • 支持Git提交审查 (review_commit)${colors.NC}`);
-  console.log(`${colors.WHITE}  • 支持多文件批量审查 (review_files)${colors.NC}`);
-  console.log('');
+  console.error(`${colors.YELLOW}💡 MCP 服务器信息：${colors.NC}`);
+  console.error(`${colors.WHITE}  • 支持自动Git变更审查 (review_changes)${colors.NC}`);
+  console.error(`${colors.WHITE}  • 支持代码片段审查 (review_code)${colors.NC}`);
+  console.error(`${colors.WHITE}  • 支持Git提交审查 (review_commit)${colors.NC}`);
+  console.error(`${colors.WHITE}  • 支持多文件批量审查 (review_files)${colors.NC}`);
+  console.error('');
 }
 
 /**
  * 显示成功 Banner
  */
 function showSuccessBanner(message: string): void {
-  console.log(`${colors.GREEN}${colors.BOLD}✅ CodeRocket MCP${colors.NC}`);
-  console.log(`${colors.GREEN}${message}${colors.NC}`);
-  console.log('');
+  console.error(`${colors.GREEN}${colors.BOLD}✅ CodeRocket MCP${colors.NC}`);
+  console.error(`${colors.GREEN}${message}${colors.NC}`);
+  console.error('');
 }
 
 /**
  * 显示错误 Banner
  */
 function showErrorBanner(message: string): void {
-  console.log(`${colors.RED}${colors.BOLD}❌ CodeRocket MCP 错误${colors.NC}`);
-  console.log(`${colors.RED}${message}${colors.NC}`);
-  console.log('');
+  console.error(`${colors.RED}${colors.BOLD}❌ CodeRocket MCP 错误${colors.NC}`);
+  console.error(`${colors.RED}${message}${colors.NC}`);
+  console.error('');
 }
 
 export {
