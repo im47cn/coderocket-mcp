@@ -3,6 +3,13 @@
  * 精美的 ASCII Art Banner 显示，参考 coderocket-cli 的设计
  */
 
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 // ANSI 颜色代码
 const colors = {
   // 基础颜色
@@ -38,10 +45,12 @@ function getTerminalWidth(): number {
  */
 function getVersion(): string {
   try {
-    const packageJson = require('../package.json');
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    const packagePath = resolve(__dirname, '../package.json');
+    const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
     return packageJson.version || '1.2.2';
   } catch {
-    return '1.2.2';
+    return '1.2.2'; // Fallback
   }
 }
 
