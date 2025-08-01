@@ -804,7 +804,8 @@ export class CodeRocketService {
   private async ensureInitialized(): Promise<void> {
     if (!this.initialized) {
       await ConfigManager.initialize();
-      await PromptManager.preloadCommonPrompts();
+      // 延迟提示词预加载，避免阻塞 MCP 服务器启动
+      // await PromptManager.preloadCommonPrompts();
       this.initialized = true;
       logger.info('CodeRocket 独立服务初始化完成');
     }
