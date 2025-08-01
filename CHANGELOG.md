@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-08-01
+
+### 🔧 Critical MCP Protocol Fixes
+
+#### 🐛 Fixed
+
+- **MCP 协议兼容性问题**: 解决 AI 编程工具无法识别工具的根本原因
+  - 修复启动脚本的 async/await 语法错误，确保 MCP 客户端能正确启动服务器
+  - 修复服务器版本号硬编码问题，现在正确从 package.json 读取实际版本 (1.1.2)
+  - 重构 JSON Schema 生成，替换有问题的 Zod 转换函数为手动创建的完整 Schema
+
+#### ✨ Enhanced
+
+- **工具描述大幅改进**: 为每个工具编写详细的功能说明、适用场景和参数文档
+  - `review_code`: 🔍 代码片段智能审查工具，包含完整的功能介绍和 AI 分析维度说明
+  - `review_commit`: 📝 Git 提交智能审查工具，详细说明变更分析和风险评估功能
+  - `review_files`: 📁 多文件批量审查工具，涵盖项目级质量评估和架构分析
+  - `configure_ai_service`: ⚙️ AI 服务配置管理工具，包含支持的服务和安全性说明
+  - `get_ai_service_status`: 📊 AI 服务状态监控工具，提供完整的健康状况报告
+
+- **JSON Schema 定义完善**:
+  - 为所有工具参数提供完整的类型定义和描述
+  - 正确标记必需参数和可选参数
+  - 添加枚举值约束和默认值说明
+  - 确保 AI 编程工具能准确理解参数要求
+
+#### 🧪 Tested
+
+- **100% MCP 协议兼容性测试通过**:
+  - ✅ 服务器启动和初始化测试
+  - ✅ 工具列表获取测试
+  - ✅ 工具调用和参数验证测试
+  - ✅ 错误处理和响应格式测试
+
+- **所有单元测试通过** (8/8，100% 成功率):
+  - ✅ ConfigManager 配置管理测试
+  - ✅ PromptManager 提示管理测试
+  - ✅ AI 服务故障转移测试
+  - ✅ 边界条件和异常处理测试
+
+#### 🎯 Impact
+
+此版本解决了用户报告的关键问题："我配置到AI编程工具中无法正常使用，也不能显示有哪些tool"。现在 AI 编程工具应该能够：
+- 正确启动 MCP 服务器
+- 识别所有可用工具
+- 理解每个工具的详细功能和参数要求
+- 成功调用工具并获得结构化响应
+
 ## [1.1.1] - 2025-08-01
 
 ### 🧹 Service Cleanup & Test Enhancement

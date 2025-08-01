@@ -20,16 +20,18 @@ if (!command || command === 'start') {
   // 直接导入并启动 MCP 服务器（不使用 spawn）
   const serverPath = resolve(__dirname, '../dist/index.js');
 
-  try {
-    // 使用 await 确保错误能被正确捕获
-    await import(serverPath);
-  } catch (error) {
-    console.error('❌ CodeRocket MCP 服务器启动失败:', error.message);
-    if (process.env.DEBUG === 'true') {
-      console.error('🔍 详细错误信息:', error);
+  // 使用 IIFE 来处理 async/await
+  (async () => {
+    try {
+      await import(serverPath);
+    } catch (error) {
+      console.error('❌ CodeRocket MCP 服务器启动失败:', error.message);
+      if (process.env.DEBUG === 'true') {
+        console.error('🔍 详细错误信息:', error);
+      }
+      process.exit(1);
     }
-    process.exit(1);
-  }
+  })();
 } else {
   // 处理其他命令
   switch (command) {
