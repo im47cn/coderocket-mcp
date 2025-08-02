@@ -4,9 +4,12 @@ import { tmpdir } from 'os';
 
 // 自定义错误类型
 export class AIServiceError extends Error {
-  constructor(message: string) {
+  public readonly service?: string;
+
+  constructor(message: string, service?: string) {
     super(message);
     this.name = 'AIServiceError';
+    this.service = service;
   }
 }
 

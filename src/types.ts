@@ -5,7 +5,7 @@ export const AIServiceSchema = z.enum(['gemini', 'claudecode']);
 export type AIService = z.infer<typeof AIServiceSchema>;
 
 // 审查状态
-export const ReviewStatusSchema = z.enum(['✅', '⚠️', '❌', '🔍']);
+export const ReviewStatusSchema = z.enum(['✅', '⚠️', '❌', '🔍', '📝']);
 export type ReviewStatus = z.infer<typeof ReviewStatusSchema>;
 
 
@@ -80,6 +80,43 @@ export const ReviewResultSchema = z.object({
   report_file: z.string().optional().describe('生成的报告文件路径（如果有）'),
 });
 export type ReviewResult = z.infer<typeof ReviewResultSchema>;
+
+// 各种审查操作的响应类型
+export const ReviewCodeResponseSchema = z.object({
+  status: ReviewStatusSchema.describe('审查状态'),
+  summary: z.string().describe('审查摘要'),
+  review: z.string().describe('审查结果'),
+  ai_service_used: AIServiceSchema.describe('使用的AI服务'),
+  timestamp: z.string().describe('审查时间'),
+});
+export type ReviewCodeResponse = z.infer<typeof ReviewCodeResponseSchema>;
+
+export const ReviewChangesResponseSchema = z.object({
+  status: ReviewStatusSchema.describe('审查状态'),
+  summary: z.string().describe('审查摘要'),
+  review: z.string().describe('审查结果'),
+  ai_service_used: AIServiceSchema.describe('使用的AI服务'),
+  timestamp: z.string().describe('审查时间'),
+});
+export type ReviewChangesResponse = z.infer<typeof ReviewChangesResponseSchema>;
+
+export const ReviewCommitResponseSchema = z.object({
+  status: ReviewStatusSchema.describe('审查状态'),
+  summary: z.string().describe('审查摘要'),
+  review: z.string().describe('审查结果'),
+  ai_service_used: AIServiceSchema.describe('使用的AI服务'),
+  timestamp: z.string().describe('审查时间'),
+});
+export type ReviewCommitResponse = z.infer<typeof ReviewCommitResponseSchema>;
+
+export const ReviewFilesResponseSchema = z.object({
+  status: ReviewStatusSchema.describe('审查状态'),
+  summary: z.string().describe('审查摘要'),
+  review: z.string().describe('审查结果'),
+  ai_service_used: AIServiceSchema.describe('使用的AI服务'),
+  timestamp: z.string().describe('审查时间'),
+});
+export type ReviewFilesResponse = z.infer<typeof ReviewFilesResponseSchema>;
 
 // AI服务状态
 export const AIServiceStatusSchema = z.object({

@@ -10,7 +10,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import { readFile } from 'fs/promises';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { CodeRocketService } from './coderocket.js';
+import { CodeRocketService, initializeCodeRocket } from './coderocket.js';
 import {
   ReviewCodeRequestSchema,
   ReviewChangesRequestSchema,
@@ -157,11 +157,8 @@ class CodeRocketMCPServer {
 
   async run() {
     try {
-      // 预先初始化配置系统
-      const { ConfigManager, CodeRocketService } = await import(
-        './coderocket.js'
-      );
-      await ConfigManager.initialize();
+      // 使用新的初始化函数初始化所有系统组件
+      await initializeCodeRocket();
 
       // 现在可以安全地初始化 CodeRocketService
       this.codeRocketService = new CodeRocketService();
