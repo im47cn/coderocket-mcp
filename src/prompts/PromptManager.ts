@@ -21,17 +21,18 @@ export class PromptManager {
   private static prompts: Map<string, string> = new Map();
   private static initialized = false;
 
-  // 功能名到文件名的映射（兼容coderocket-cli）
+  // 功能名到文件名的映射（统一使用git-commit-review-prompt.md）
+  // 所有审查功能使用同一个高质量的提示词，区别仅在于被审查的内容
   private static readonly PROMPT_FILE_MAPPING: Record<string, string> = {
     'git_commit': 'git-commit-review-prompt.md',
     'review_commit': 'git-commit-review-prompt.md',
-    'code_review': 'code-review-prompt.md',
-    'review_code': 'code-review-prompt.md',
-    'review_changes': 'git-changes-review-prompt.md',
-    'git_changes': 'git-changes-review-prompt.md',
-    'review_files': 'file-review-prompt.md',
-    'file_review': 'file-review-prompt.md',
-    'base': 'code-review-prompt.md', // 默认使用代码审查提示词
+    'code_review': 'git-commit-review-prompt.md',
+    'review_code': 'git-commit-review-prompt.md',
+    'review_changes': 'git-commit-review-prompt.md',
+    'git_changes': 'git-commit-review-prompt.md',
+    'review_files': 'git-commit-review-prompt.md',
+    'file_review': 'git-commit-review-prompt.md',
+    'base': 'git-commit-review-prompt.md', // 统一使用专业的代码审查提示词
   };
 
   /**

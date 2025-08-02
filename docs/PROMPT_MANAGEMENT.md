@@ -12,20 +12,26 @@ coderocket-mcp 现在采用与 coderocket-cli 兼容的提示词管理方式，�
 2. **全局级** - `~/.coderocket/prompts/` 目录  
 3. **默认值** - 内置的默认提示词
 
-### 2. 文件名映射
-功能名到文件名的映射关系：
+### 2. 统一提示词设计
+所有审查功能统一使用 `git-commit-review-prompt.md`，实现：
+- **一致的审查标准**：所有类型的代码审查使用相同的专业标准
+- **统一的输出格式**：保持审查结果的格式一致性
+- **简化的维护**：只需维护一个高质量的提示词文件
+- **内容差异化**：通过被审查的内容类型（代码片段、Git变更、文件等）自然区分
+
+功能名到文件名的映射关系（统一映射）：
 
 | 功能名 | 文件名 | 说明 |
 |--------|--------|------|
 | `git_commit` | `git-commit-review-prompt.md` | Git提交审查 |
 | `review_commit` | `git-commit-review-prompt.md` | Git提交审查 |
-| `code_review` | `code-review-prompt.md` | 代码片段审查 |
-| `review_code` | `code-review-prompt.md` | 代码片段审查 |
-| `review_changes` | `git-changes-review-prompt.md` | Git变更审查 |
-| `git_changes` | `git-changes-review-prompt.md` | Git变更审查 |
-| `review_files` | `file-review-prompt.md` | 多文件审查 |
-| `file_review` | `file-review-prompt.md` | 多文件审查 |
-| `base` | `code-review-prompt.md` | 基础提示词 |
+| `code_review` | `git-commit-review-prompt.md` | 代码片段审查（统一） |
+| `review_code` | `git-commit-review-prompt.md` | 代码片段审查（统一） |
+| `review_changes` | `git-commit-review-prompt.md` | Git变更审查（统一） |
+| `git_changes` | `git-commit-review-prompt.md` | Git变更审查（统一） |
+| `review_files` | `git-commit-review-prompt.md` | 多文件审查（统一） |
+| `file_review` | `git-commit-review-prompt.md` | 多文件审查（统一） |
+| `base` | `git-commit-review-prompt.md` | 基础提示词（统一） |
 
 ### 3. 兼容性
 - 与 coderocket-cli 使用相同的文件命名规范
