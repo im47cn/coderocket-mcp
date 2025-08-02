@@ -1,18 +1,16 @@
 import { z } from 'zod';
 
 // AI服务类型
-export const AIServiceSchema = z.enum(['gemini', 'opencode', 'claudecode']);
+export const AIServiceSchema = z.enum(['gemini', 'claudecode']);
 export type AIService = z.infer<typeof AIServiceSchema>;
 
 // 审查状态
-export const ReviewStatusSchema = z.enum(['✅', '⚠️', '❌', '🔍']);
+export const ReviewStatusSchema = z.enum(['✅', '⚠️', '❌', '🔍', '📝']);
 export type ReviewStatus = z.infer<typeof ReviewStatusSchema>;
 
-// 配置范围
-export const ConfigScopeSchema = z.enum(['project', 'global']);
-export type ConfigScope = z.infer<typeof ConfigScopeSchema>;
 
-// 代码审查请求
+
+// 代码审查请求（传统方式，保留向后兼容）
 export const ReviewCodeRequestSchema = z.object({
   code: z.string().describe('要审查的代码内容'),
   language: z.string().optional().describe('代码语言（可选，用于更好的分析）'),
@@ -21,6 +19,27 @@ export const ReviewCodeRequestSchema = z.object({
   custom_prompt: z.string().optional().describe('自定义审查提示词（可选）'),
 });
 export type ReviewCodeRequest = z.infer<typeof ReviewCodeRequestSchema>;
+
+// Git变更审查请求（新的自动化方式）
+export const ReviewChangesRequestSchema = z.object({
+  repository_path: z
+    .string()
+    .optional()
+    .describe('Git仓库路径（可选，默认为当前目录）'),
+  ai_service: AIServiceSchema.optional().describe('指定使用的AI服务（可选）'),
+  custom_prompt: z.string().optional().describe('自定义审查提示词（可选）'),
+  include_staged: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('是否包含已暂存的变更'),
+  include_unstaged: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('是否包含未暂存的变更'),
+});
+export type ReviewChangesRequest = z.infer<typeof ReviewChangesRequestSchema>;
 
 // Git提交审查请求
 export const ReviewCommitRequestSchema = z.object({
@@ -49,17 +68,7 @@ export const ReviewFilesRequestSchema = z.object({
 });
 export type ReviewFilesRequest = z.infer<typeof ReviewFilesRequestSchema>;
 
-// AI服务配置请求
-export const ConfigureAIServiceRequestSchema = z.object({
-  service: AIServiceSchema.describe('要配置的AI服务'),
-  scope: ConfigScopeSchema.optional().default('project').describe('配置范围'),
-  api_key: z.string().optional().describe('API密钥（可选）'),
-  timeout: z.number().optional().describe('超时时间（秒）'),
-  max_retries: z.number().optional().describe('最大重试次数'),
-});
-export type ConfigureAIServiceRequest = z.infer<
-  typeof ConfigureAIServiceRequestSchema
->;
+
 
 // 审查结果
 export const ReviewResultSchema = z.object({
@@ -72,6 +81,43 @@ export const ReviewResultSchema = z.object({
 });
 export type ReviewResult = z.infer<typeof ReviewResultSchema>;
 
+// 各种审查操作的响应类型
+export const ReviewCodeResponseSchema = z.object({
+  status: ReviewStatusSchema.describe('审查状态'),
+  summary: z.string().describe('审查摘要'),
+  review: z.string().describe('审查结果'),
+  ai_service_used: AIServiceSchema.describe('使用的AI服务'),
+  timestamp: z.string().describe('审查时间'),
+});
+export type ReviewCodeResponse = z.infer<typeof ReviewCodeResponseSchema>;
+
+export const ReviewChangesResponseSchema = z.object({
+  status: ReviewStatusSchema.describe('审查状态'),
+  summary: z.string().describe('审查摘要'),
+  review: z.string().describe('审查结果'),
+  ai_service_used: AIServiceSchema.describe('使用的AI服务'),
+  timestamp: z.string().describe('审查时间'),
+});
+export type ReviewChangesResponse = z.infer<typeof ReviewChangesResponseSchema>;
+
+export const ReviewCommitResponseSchema = z.object({
+  status: ReviewStatusSchema.describe('审查状态'),
+  summary: z.string().describe('审查摘要'),
+  review: z.string().describe('审查结果'),
+  ai_service_used: AIServiceSchema.describe('使用的AI服务'),
+  timestamp: z.string().describe('审查时间'),
+});
+export type ReviewCommitResponse = z.infer<typeof ReviewCommitResponseSchema>;
+
+export const ReviewFilesResponseSchema = z.object({
+  status: ReviewStatusSchema.describe('审查状态'),
+  summary: z.string().describe('审查摘要'),
+  review: z.string().describe('审查结果'),
+  ai_service_used: AIServiceSchema.describe('使用的AI服务'),
+  timestamp: z.string().describe('审查时间'),
+});
+export type ReviewFilesResponse = z.infer<typeof ReviewFilesResponseSchema>;
+
 // AI服务状态
 export const AIServiceStatusSchema = z.object({
   service: AIServiceSchema.describe('AI服务名称'),
@@ -83,15 +129,7 @@ export const AIServiceStatusSchema = z.object({
 });
 export type AIServiceStatus = z.infer<typeof AIServiceStatusSchema>;
 
-// 服务状态响应
-export const ServiceStatusResponseSchema = z.object({
-  current_service: AIServiceSchema.describe('当前使用的AI服务'),
-  services: z.array(AIServiceStatusSchema).describe('所有AI服务的状态'),
-  auto_switch_enabled: z.boolean().describe('是否启用自动切换'),
-  global_config_path: z.string().optional().describe('全局配置文件路径'),
-  project_config_path: z.string().optional().describe('项目配置文件路径'),
-});
-export type ServiceStatusResponse = z.infer<typeof ServiceStatusResponseSchema>;
+
 
 // 错误响应
 export const ErrorResponseSchema = z.object({
@@ -101,10 +139,35 @@ export const ErrorResponseSchema = z.object({
 });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
 
-// 成功响应
-export const SuccessResponseSchema = z.object({
-  success: z.boolean().describe('操作是否成功'),
-  message: z.string().describe('成功信息'),
-  data: z.any().optional().describe('返回数据'),
+// 配置AI服务请求
+export const ConfigureAIServiceRequestSchema = z.object({
+  service: AIServiceSchema.describe('要配置的AI服务（gemini/claudecode）'),
+  scope: z.enum(['project', 'global']).optional().default('project').describe('配置范围（project: 项目级别, global: 全局级别）'),
+  api_key: z.string().optional().describe('API密钥'),
+  timeout: z.number().optional().describe('超时时间（秒）'),
+  max_retries: z.number().optional().describe('最大重试次数'),
 });
-export type SuccessResponse = z.infer<typeof SuccessResponseSchema>;
+export type ConfigureAIServiceRequest = z.infer<typeof ConfigureAIServiceRequestSchema>;
+
+// 获取AI服务状态请求（无参数）
+export const GetAIServiceStatusRequestSchema = z.object({});
+export type GetAIServiceStatusRequest = z.infer<typeof GetAIServiceStatusRequestSchema>;
+
+// 配置AI服务响应
+export const ConfigureAIServiceResponseSchema = z.object({
+  success: z.boolean().describe('配置是否成功'),
+  message: z.string().describe('成功或错误信息'),
+  config_path: z.string().optional().describe('配置文件保存路径'),
+  restart_required: z.boolean().optional().describe('是否需要重启服务'),
+});
+export type ConfigureAIServiceResponse = z.infer<typeof ConfigureAIServiceResponseSchema>;
+
+// 获取AI服务状态响应
+export const GetAIServiceStatusResponseSchema = z.object({
+  services: z.array(AIServiceStatusSchema).describe('所有AI服务的状态信息'),
+  current_service: z.string().describe('当前激活的AI服务'),
+  auto_switch_enabled: z.boolean().describe('是否启用自动切换'),
+});
+export type GetAIServiceStatusResponse = z.infer<typeof GetAIServiceStatusResponseSchema>;
+
+

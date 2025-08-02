@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * CodeRocket MCP 启动脚本
+ * CodeRocket MCP 独立启动脚本
+ *
+ * 符合 MCP 标准，直接启动服务器，无需额外参数
  */
 
-import { spawn } from 'child_process';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
@@ -14,96 +15,238 @@ const __dirname = dirname(__filename);
 
 const command = process.argv[2];
 
-switch (command) {
-  case 'start':
-  case undefined:
-    // 启动MCP服务器
-    console.error('🚀 启动 CodeRocket MCP 服务器...');
-    const serverPath = resolve(__dirname, '../dist/index.js');
-    const server = spawn('node', [serverPath], {
-      stdio: 'inherit',
-      env: process.env,
-    });
-    
-    server.on('error', (error) => {
-      console.error('❌ 服务器启动失败:', error.message);
-      process.exit(1);
-    });
-    
-    server.on('exit', (code) => {
-      if (code !== 0) {
-        console.error(`❌ 服务器异常退出，代码: ${code}`);
-        process.exit(code || 1);
+// 处理工具调用命令（如 review_changes, review_commit 等）
+if (command && ['review_changes', 'review_commit', 'review_code', 'review_files', 'get_ai_service_status', 'configure_ai_service'].includes(command)) {
+  const toolArgs = process.argv.slice(3);
+
+  async function runTool() {
+    try {
+      console.log('🔧 正在初始化服务...');
+      const coderocketModule = await import(resolve(__dirname, '../dist/coderocket.js'));
+      console.log('✅ 模块导入成功');
+
+      const { CodeRocketService, ConfigManager } = coderocketModule;
+      console.log('✅ 类导入成功');
+
+      // 初始化配置管理器
+      await ConfigManager.initialize();
+      console.log('✅ 配置管理器初始化完成');
+
+      const service = new CodeRocketService();
+      console.log(`🚀 正在执行工具: ${command}`);
+
+      let result;
+      switch (command) {
+        case 'review_changes':
+          result = await service.reviewChanges({
+            repository_path: toolArgs.find(arg => arg.startsWith('--path='))?.split('=')[1],
+            ai_service: toolArgs.find(arg => arg.startsWith('--ai-service='))?.split('=')[1],
+            custom_prompt: toolArgs.find(arg => arg.startsWith('--prompt='))?.split('=')[1],
+            include_staged: !toolArgs.includes('--no-staged'),
+            include_unstaged: !toolArgs.includes('--no-unstaged'),
+          });
+          break;
+        case 'review_commit':
+          result = await service.reviewCommit({
+            repository_path: toolArgs.find(arg => arg.startsWith('--path='))?.split('=')[1],
+            commit_hash: toolArgs.find(arg => arg.startsWith('--commit='))?.split('=')[1],
+            ai_service: toolArgs.find(arg => arg.startsWith('--ai-service='))?.split('=')[1],
+            custom_prompt: toolArgs.find(arg => arg.startsWith('--prompt='))?.split('=')[1],
+          });
+          break;
+        case 'review_code':
+          result = await service.reviewCode({
+            code: toolArgs.find(arg => arg.startsWith('--code='))?.split('=')[1] || '',
+            language: toolArgs.find(arg => arg.startsWith('--language='))?.split('=')[1],
+            context: toolArgs.find(arg => arg.startsWith('--context='))?.split('=')[1],
+            ai_service: toolArgs.find(arg => arg.startsWith('--ai-service='))?.split('=')[1],
+            custom_prompt: toolArgs.find(arg => arg.startsWith('--prompt='))?.split('=')[1],
+          });
+          break;
+        case 'review_files':
+          const filesArg = toolArgs.find(arg => arg.startsWith('--files='))?.split('=')[1];
+          const files = filesArg ? filesArg.split(',') : [];
+          result = await service.reviewFiles({
+            files,
+            repository_path: toolArgs.find(arg => arg.startsWith('--path='))?.split('=')[1],
+            ai_service: toolArgs.find(arg => arg.startsWith('--ai-service='))?.split('=')[1],
+            custom_prompt: toolArgs.find(arg => arg.startsWith('--prompt='))?.split('=')[1],
+          });
+          break;
+        case 'get_ai_service_status':
+          console.log('📊 正在获取AI服务状态...');
+          result = await service.getAIServiceStatus();
+          console.log('✅ AI服务状态获取完成');
+          break;
+        case 'configure_ai_service':
+          result = await service.configureAIService({
+            service: toolArgs.find(arg => arg.startsWith('--service='))?.split('=')[1] || 'gemini',
+            api_key: toolArgs.find(arg => arg.startsWith('--api-key='))?.split('=')[1],
+            scope: toolArgs.find(arg => arg.startsWith('--scope='))?.split('=')[1] || 'project',
+            language: toolArgs.find(arg => arg.startsWith('--language='))?.split('=')[1],
+            timeout: toolArgs.find(arg => arg.startsWith('--timeout='))?.split('=')[1] ?
+              parseInt(toolArgs.find(arg => arg.startsWith('--timeout='))?.split('=')[1], 10) : undefined,
+            max_retries: toolArgs.find(arg => arg.startsWith('--max-retries='))?.split('=')[1] ?
+              parseInt(toolArgs.find(arg => arg.startsWith('--max-retries='))?.split('=')[1], 10) : undefined,
+          });
+          break;
+        default:
+          throw new Error(`工具 ${command} 暂未实现`);
       }
-    });
-    break;
 
-  case 'test':
-    // 运行测试
-    console.error('🧪 运行 CodeRocket MCP 测试...');
-    const testPath = resolve(__dirname, '../dist/test.js');
-    const test = spawn('node', [testPath], {
-      stdio: 'inherit',
-      env: process.env,
-    });
-    
-    test.on('error', (error) => {
-      console.error('❌ 测试运行失败:', error.message);
+      // 输出结果
+      if (typeof result === 'object') {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        console.log(result);
+      }
+    } catch (error) {
+      console.error(`❌ 工具执行失败: ${error.message}`);
+      if (process.env.DEBUG === 'true') {
+        console.error('🔍 详细错误信息:', error);
+      }
       process.exit(1);
-    });
-    
-    test.on('exit', (code) => {
-      process.exit(code || 0);
-    });
-    break;
+    }
+  }
 
-  case 'help':
-  case '--help':
-  case '-h':
-    console.log(`
-CodeRocket MCP - AI驱动的代码审查服务器
+  runTool();
+}
+// 如果没有命令或命令是 start，直接启动 MCP 服务器
+else if (!command || command === 'start') {
+  // 直接导入并启动 MCP 服务器（不使用 spawn）
+  const serverPath = resolve(__dirname, '../dist/index.js');
 
-用法:
-  coderocket-mcp [命令]
+  // 使用 IIFE 来处理 async/await
+  (async () => {
+    try {
+      await import(serverPath);
+    } catch (error) {
+      console.error('❌ CodeRocket MCP 服务器启动失败:', error.message);
+      if (process.env.DEBUG === 'true') {
+        console.error('🔍 详细错误信息:', error);
+      }
+      process.exit(1);
+    }
+  })();
+} else {
+  // 处理其他命令
+  switch (command) {
+
+    case 'test':
+      // 运行测试
+      console.error('🧪 运行 CodeRocket MCP 测试...');
+      const testPath = resolve(__dirname, '../dist/test.js');
+
+      try {
+        import(testPath).catch((error) => {
+          console.error('❌ 测试运行失败:', error.message);
+          process.exit(1);
+        });
+      } catch (error) {
+        console.error('❌ 无法加载测试模块:', error.message);
+        process.exit(1);
+      }
+      break;
+
+    case 'help':
+    case '--help':
+    case '-h':
+      // 只在 DEBUG 模式下显示 banner，避免 IDE 兼容性问题
+      try {
+        if (process.env.DEBUG === 'true') {
+          const bannerPath = resolve(__dirname, '../dist/banner.js');
+          const { showMiniBanner } = await import(bannerPath);
+          showMiniBanner();
+          console.log('');
+        } else {
+          // 生产模式下显示简洁的标题
+          console.log('CodeRocket MCP - 独立的AI驱动代码审查服务器');
+          console.log('');
+        }
+      } catch (error) {
+        // 如果 banner 加载失败，继续显示帮助信息
+        console.log('CodeRocket MCP - 独立的AI驱动代码审查服务器');
+        console.log('');
+      }
+
+      console.log(`用法:
+  npx @yeepay/coderocket-mcp [命令]
 
 命令:
-  start, (默认)    启动MCP服务器
-  test             运行功能测试
-  help             显示帮助信息
+  (默认)               启动MCP服务器
+  test                 运行功能测试
+  help                 显示帮助信息
+  version              显示版本信息
 
 示例:
-  coderocket-mcp start     # 启动服务器
-  coderocket-mcp test      # 运行测试
-  coderocket-mcp help      # 显示帮助
+  npx @yeepay/coderocket-mcp        # 启动服务器
+  npx @yeepay/coderocket-mcp test   # 运行测试
+  npx @yeepay/coderocket-mcp help   # 显示帮助
 
-环境变量:
-  AI_SERVICE              默认AI服务 (gemini/opencode/claudecode)
+环境变量配置:
+  AI_SERVICE              默认AI服务 (gemini/claudecode)
   AI_AUTO_SWITCH          启用自动切换 (true/false)
-  AI_TIMEOUT              超时时间（秒）
-  AI_MAX_RETRIES          最大重试次数
+  AI_TIMEOUT              超时时间（秒，默认30）
+  AI_MAX_RETRIES          最大重试次数（默认3）
+  GEMINI_API_KEY          Gemini API密钥
+  CLAUDECODE_API_KEY      ClaudeCode API密钥
   NODE_ENV                环境模式 (development/production)
+  DEBUG                   调试模式 (true/false)
 
-更多信息请访问: https://github.com/im47cn/coderocket-cli
+配置文件:
+  项目级: .env
+  全局级: ~/.coderocket/env
+
+更多信息请访问: https://github.com/im47cn/coderocket-mcp
 `);
-    break;
+      break;
 
-  case 'version':
-  case '--version':
-  case '-v':
-    // 读取package.json获取版本信息
-    try {
-      const packagePath = resolve(__dirname, '../package.json');
-      const packageJson = JSON.parse(
-        readFileSync(packagePath, 'utf-8')
-      );
-      console.log(`CodeRocket MCP v${packageJson.version}`);
-    } catch (error) {
-      console.log('CodeRocket MCP v1.0.0');
-    }
-    break;
+    case 'version':
+    case '--version':
+    case '-v':
+      // 只在 DEBUG 模式下显示 banner，避免 IDE 兼容性问题
+      try {
+        if (process.env.DEBUG === 'true') {
+          // 动态导入 banner 模块
+          const bannerPath = resolve(__dirname, '../dist/banner.js');
+          const { showMiniBanner } = await import(bannerPath);
 
-  default:
-    console.error(`❌ 未知命令: ${command}`);
-    console.error('使用 "coderocket-mcp help" 查看可用命令');
-    process.exit(1);
+          showMiniBanner();
+          console.log('');
+        }
+
+        // 读取package.json获取详细版本信息
+        const packagePath = resolve(__dirname, '../package.json');
+        const packageJson = JSON.parse(
+          readFileSync(packagePath, 'utf-8')
+        );
+
+        if (process.env.DEBUG === 'true') {
+          console.log(`📦 版本: v${packageJson.version}`);
+          console.log(`🏠 安装路径: ${resolve(__dirname, '..')}`);
+          console.log(`🔗 NPM包: @yeepay/coderocket-mcp`);
+          console.log(`📚 文档: https://github.com/im47cn/coderocket-mcp`);
+        } else {
+          // 生产模式下只输出简洁的版本信息
+          console.log(`CodeRocket MCP v${packageJson.version} 🚀 - AI 驱动的代码审查服务器`);
+          console.log('');
+          console.log(`📦 版本: v${packageJson.version}`);
+          console.log(`🏠 安装路径: ${resolve(__dirname, '..')}`);
+          console.log(`🔗 NPM包: @yeepay/coderocket-mcp`);
+          console.log(`📚 文档: https://github.com/im47cn/coderocket-mcp`);
+        }
+
+      } catch (error) {
+        console.error('⚠️ 无法读取版本信息:', error.message);
+        console.error('📁 尝试的路径:', resolve(__dirname, '../package.json'));
+        console.log('CodeRocket MCP');
+        console.log('💡 运行 "npm view @yeepay/coderocket-mcp version" 查看最新版本');
+      }
+      break;
+
+    default:
+      console.error(`❌ 未知命令: ${command}`);
+      console.error('使用 "npx @yeepay/coderocket-mcp help" 查看可用命令');
+      process.exit(1);
+  }
 }

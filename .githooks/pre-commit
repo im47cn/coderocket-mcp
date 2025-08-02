@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# CodeRocket MCP Pre-commit Hook
+# 在提交前自动进行代码审查
+
+echo "🔍 正在进行提交前代码审查..."
+
+# 检查是否有暂存的文件
+if git diff --cached --quiet; then
+    echo "⚠️ 没有暂存的文件，跳过代码审查"
+    exit 0
+fi
+
+# 检查 coderocket-mcp 是否可用
+if ! command -v npx &> /dev/null; then
+    echo "❌ npx 不可用，跳过代码审查"
+    exit 0
+fi
+
+# 尝试进行代码审查
+echo "📝 正在审查最新提交..."
+
+# 使用 coderocket-mcp 进行代码审查
+if npx @yeepay/coderocket-mcp review-commit; then
+    echo "✅ 代码审查通过"
+    exit 0
+else
+    echo "⚠️ 代码审查失败或服务不可用，但允许提交"
+    echo "💡 建议手动检查代码质量"
+    exit 0
+fi
