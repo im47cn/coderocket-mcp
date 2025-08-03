@@ -7,6 +7,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/im47cn/coderocket-mcp?utm_source=oss&utm_medium=github&utm_campaign=im47cn%2Fcoderocket-mcp&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 一个完全独立的基于 Model Context Protocol (MCP) 的智能代码审查服务器，为AI编程工具提供专业的代码审查能力。
 
