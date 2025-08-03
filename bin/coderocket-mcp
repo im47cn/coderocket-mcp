@@ -25,12 +25,12 @@ if (command && ['review_changes', 'review_commit', 'review_code', 'review_files'
       const coderocketModule = await import(resolve(__dirname, '../dist/coderocket.js'));
       console.log('✅ 模块导入成功');
 
-      const { CodeRocketService, ConfigManager } = coderocketModule;
+      const { CodeRocketService, initializeCodeRocket } = coderocketModule;
       console.log('✅ 类导入成功');
 
-      // 初始化配置管理器
-      await ConfigManager.initialize();
-      console.log('✅ 配置管理器初始化完成');
+      // 初始化所有系统组件（包括ConfigManager和PromptManager）
+      await initializeCodeRocket();
+      console.log('✅ 系统组件初始化完成');
 
       const service = new CodeRocketService();
       console.log(`🚀 正在执行工具: ${command}`);

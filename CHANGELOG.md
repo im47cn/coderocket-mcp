@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2025-08-02
+
+### 🔧 关键修复：CLI模式初始化
+
+#### Fixed
+- **关键修复**：修复了CLI模式下PromptManager未初始化的问题
+- 更新CLI入口点使用完整的 `initializeCodeRocket()` 函数
+- 确保所有系统组件（ConfigManager + PromptManager）在CLI模式下正确初始化
+
+#### Technical Details
+- 修改 `bin/coderocket-mcp` 脚本，从只初始化ConfigManager改为调用完整初始化流程
+- 解决了 "PromptManager 未初始化，请先调用 initialize()" 错误
+- 保证CLI工具调用与MCP服务器模式的一致性
+
+## [1.4.0] - 2025-08-02
+
+### 🎯 统一提示词架构优化
+
+#### Changed
+- **重大优化**：实现真正的统一提示词设计，所有审查功能统一使用 `git-commit-review-prompt.md`
+- **架构简化**：移除冗余的提示词文件映射，实现"一套提示词，四种审查方式"
+- **一致性保证**：确保所有审查结果使用相同的专业标准和输出格式
+
+#### Fixed
+- **启动警告修复**：彻底解决了启动时的提示词文件缺失警告
+- **文件管理优化**：清理了不必要的重复提示词文件
+
+#### Technical Improvements
+- 优化了 PromptManager 的文件映射逻辑，所有功能统一映射到单一提示词文件
+- 更新了文档以反映统一提示词的设计理念
+- 简化了提示词维护流程，降低了系统复杂度
+
+#### Benefits
+- **维护性**：只需维护一个高质量的提示词文件
+- **一致性**：所有审查功能使用相同的专业标准
+- **可预测性**：审查结果风格和格式保持一致
+- **简洁性**：避免了重复文件和不必要的复杂性
+
 ## [1.2.7] - 2025-08-01
 
 ### 🔧 关键修复：ConfigManager 初始化时序
