@@ -86,16 +86,10 @@ export class ConfigManager {
       const projectConfigPath = join(process.cwd(), '.env');
       const content = await readFile(projectConfigPath, 'utf-8');
       const projectConfig = this.parseEnvContent(content);
-      console.log('DEBUG: 项目配置文件路径:', projectConfigPath);
-      console.log('DEBUG: 项目配置内容:', content);
-      console.log('DEBUG: 解析后的项目配置:', projectConfig);
-      console.log('DEBUG: 加载前的config.AI_TIMEOUT:', this.config.AI_TIMEOUT);
       Object.assign(this.config, projectConfig);
-      console.log('DEBUG: 加载后的config.AI_TIMEOUT:', this.config.AI_TIMEOUT);
       logger.debug('项目配置加载成功', { path: projectConfigPath });
     } catch (error) {
       // 项目配置文件不存在是正常的
-      console.log('DEBUG: 项目配置文件加载失败:', error instanceof Error ? error.message : String(error));
       logger.debug('项目配置文件不存在，跳过');
     }
   }

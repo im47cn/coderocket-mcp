@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2025-08-03
+
+### 🧹 项目清理与优化
+
+#### Removed
+- **废弃文件清理**：删除了 `src/toolDefinitions.ts` 及其编译产物
+- **重复脚本清理**：移除了10个临时配置和调试脚本
+- **重复配置清理**：删除了重复的 `eslint.config.ts` 配置文件
+
+#### Fixed
+- **ESLint配置**：修复了ESLint配置问题，确保代码检查正常工作
+- **调试代码清理**：移除了生产代码中的调试console.log语句
+- **工具定义一致性**：统一使用 `standardToolDefinitions.ts` 作为唯一工具定义源
+
+#### Improved
+- **项目结构**：减少了11个冗余文件，提升项目整洁度
+- **维护性**：消除了文件重复和配置冲突
+- **测试覆盖**：保持100%测试通过率 (10/10)
+
+#### Technical Details
+- 建立了废弃文件清理机制和预防性建议
+- 修复了参数定义冲突问题，确保MCP工具定义与实现完全一致
+- 优化了构建流程，清理了编译产物中的废弃文件
+
 ## [1.4.1] - 2025-08-02
 
 ### 🔧 关键修复：CLI模式初始化

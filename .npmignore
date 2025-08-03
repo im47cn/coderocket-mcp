@@ -1,7 +1,7 @@
 # Source files
 src/
 tsconfig.json
-.eslintrc.js
+.eslintrc.cjs
 .prettierrc
 
 # Development files
