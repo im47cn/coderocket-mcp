@@ -26,7 +26,7 @@ export const CODEROCKET_TOOLS: Tool[] = [
         },
         ai_service: {
           type: 'string',
-          enum: ['gemini', 'claudecode'],
+          enum: ['gemini', 'claude'],
           description: '指定使用的AI服务（可选）'
         },
         custom_prompt: {
@@ -49,7 +49,7 @@ export const CODEROCKET_TOOLS: Tool[] = [
         },
         ai_service: {
           type: 'string',
-          enum: ['gemini', 'claudecode'],
+          enum: ['gemini', 'claude'],
           description: '指定使用的AI服务（可选）'
         },
         custom_prompt: {
@@ -86,7 +86,7 @@ export const CODEROCKET_TOOLS: Tool[] = [
         },
         ai_service: {
           type: 'string',
-          enum: ['gemini', 'claudecode'],
+          enum: ['gemini', 'claude'],
           description: '指定使用的AI服务（可选）'
         },
         custom_prompt: {
@@ -116,7 +116,7 @@ export const CODEROCKET_TOOLS: Tool[] = [
         },
         ai_service: {
           type: 'string',
-          enum: ['gemini', 'claudecode'],
+          enum: ['gemini', 'claude'],
           description: '指定使用的AI服务（可选）'
         },
         custom_prompt: {
@@ -135,8 +135,8 @@ export const CODEROCKET_TOOLS: Tool[] = [
       properties: {
         service: {
           type: 'string',
-          enum: ['gemini', 'claudecode'],
-          description: '要配置的AI服务（gemini/claudecode）'
+          enum: ['gemini', 'claude'],
+          description: '要配置的AI服务（gemini/claude）'
         },
         scope: {
           type: 'string',

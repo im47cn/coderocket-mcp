@@ -71,7 +71,7 @@ npx -y @yeepay/coderocket-mcp --version
 npx -y @yeepay/coderocket-mcp test
 
 # 4. 启动服务器
-npx -y @yeepay/coderocket-mcp start
+npx -y @yeepay/coderocket-mcp
 ```
 
 ### 开发者安装
@@ -193,7 +193,17 @@ CodeRocket MCP 提供以下工具：
 - `ai_service` (string, 可选): 指定AI服务
 - `custom_prompt` (string, 可选): 自定义审查提示词
 
-### 4. configure_ai_service
+### 4. review_changes
+自动检测并审查当前Git仓库中所有未提交的变更，无需手动传递代码内容。
+
+**参数：**
+- `repository_path` (string, 可选): Git仓库路径，默认为当前目录
+- `ai_service` (string, 可选): 指定AI服务
+- `custom_prompt` (string, 可选): 自定义审查提示词
+- `include_staged` (boolean, 可选): 是否包含已暂存的变更，默认为true
+- `include_unstaged` (boolean, 可选): 是否包含未暂存的变更，默认为true
+
+### 5. configure_ai_service
 配置AI服务设置，包括服务选择、API密钥等。
 
 **参数：**
@@ -203,7 +213,7 @@ CodeRocket MCP 提供以下工具：
 - `timeout` (number, 可选): 超时时间
 - `max_retries` (number, 可选): 最大重试次数
 
-### 5. get_ai_service_status
+### 6. get_ai_service_status
 获取所有AI服务的状态信息，包括可用性和配置状态。
 
 **参数：** 无

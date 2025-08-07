@@ -21,11 +21,18 @@ fi
 echo "📝 正在审查最新提交..."
 
 # 使用 coderocket-mcp 进行代码审查
-if npx @yeepay/coderocket-mcp review-commit; then
+if npx @yeepay/coderocket-mcp review_changes --no-unstaged; then
     echo "✅ 代码审查通过"
     exit 0
 else
-    echo "⚠️ 代码审查失败或服务不可用，但允许提交"
-    echo "💡 建议手动检查代码质量"
-    exit 0
+    echo "❌ 代码审查失败"
+    echo "💡 请修复问题后重新提交，或使用 --no-verify 跳过检查"
+
+    # 检查是否强制允许提交
+    if [[ "${CODEROCKET_ALLOW_COMMIT:-false}" == "true" ]]; then
+        echo "⚠️ 强制允许提交（CODEROCKET_ALLOW_COMMIT=true）"
+        exit 0
+    fi
+
+    exit 1
 fi
