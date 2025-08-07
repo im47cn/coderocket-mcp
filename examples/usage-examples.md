@@ -107,16 +107,16 @@
 ### 4. 配置AI服务
 
 **用户提问：**
-"请帮我配置使用OpenCode服务进行代码审查"
+"请帮我配置使用Gemini服务进行代码审查"
 
 **AI工具调用：**
 ```json
 {
   "tool": "configure_ai_service",
   "arguments": {
-    "service": "opencode",
+    "service": "gemini",
     "scope": "project",
-    "api_key": "your_opencode_api_key",
+    "api_key": "your_gemini_api_key",
     "timeout": 60
   }
 }
@@ -144,12 +144,6 @@
       "service": "gemini",
       "available": true,
       "configured": true
-    },
-    {
-      "service": "opencode",
-      "available": true,
-      "configured": false,
-      "config_command": "opencode config"
     },
     {
       "service": "claudecode",
@@ -217,7 +211,7 @@
 1. **配置多个AI服务**：建议配置多个AI服务作为备用，启用自动切换功能
 2. **合理设置超时**：根据网络情况调整超时时间
 3. **使用项目级配置**：为不同项目设置不同的审查规则
-4. **定期更新**：保持CodeRocket-CLI和MCP服务器的最新版本
+4. **定期更新**：保持CodeRocket-MCP服务器的最新版本
 
 ## 故障排除
 

@@ -7,15 +7,17 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/im47cn/coderocket-mcp?utm_source=oss&utm_medium=github&utm_campaign=im47cn%2Fcoderocket-mcp&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
-一个基于 Model Context Protocol (MCP) 的智能代码审查 MCP，集成了 CodeRocket-CLI 的强大功能，为AI编程工具提供专业的代码审查能力。
+一个完全独立的基于 Model Context Protocol (MCP) 的智能代码审查服务器，为AI编程工具提供专业的代码审查能力。
 
 ## 🚀 核心功能
 
 - **多维度代码审查**：支持代码片段、Git提交、文件列表的全面审查
-- **多AI服务支持**：集成Gemini、OpenCode、ClaudeCode等多种AI服务
+- **多AI服务支持**：原生集成Gemini、ClaudeCode等AI服务
 - **智能故障转移**：自动切换AI服务，确保审查的可靠性
-- **灵活配置管理**：支持项目级和全局级配置
+- **灵活配置管理**：支持环境变量和.env文件配置
+- **专业提示词系统**：内置专业代码审查提示词，支持自定义
 - **详细错误处理**：提供用户友好的错误信息和解决建议
 - **完整日志记录**：详细的操作日志，便于调试和监控
 
@@ -26,22 +28,37 @@
 - [MCP工具](#-mcp工具)
 - [配置说明](#️-配置说明)
 - [使用示例](#-使用示例)
+- [提示词自定义](#-提示词自定义)
 - [故障排除](#-故障排除)
 - [开发指南](#-开发指南)
 
 ## 🛠 安装
 
-### 正式安装（推荐）
+### 快速安装（推荐）
 
 #### 前置要求
 
 1. **Node.js**: >= 18.0.0
-2. **CodeRocket-CLI**: 需要先安装 [CodeRocket-CLI](https://github.com/im47cn/coderocket-cli)
-3. **AI服务**: 至少配置一个AI服务（Gemini、OpenCode或ClaudeCode）
+2. **AI服务API密钥**: 至少配置一个AI服务（Gemini、ClaudeCode）
 
-#### 安装过程
+#### 直接使用（无需安装）
 
-从npm注册表安装：
+使用 npx 直接运行，无需全局安装：
+
+```bash
+# 直接启动 CodeRocket MCP 服务器
+npx @yeepay/coderocket-mcp
+
+# 查看帮助信息
+npx @yeepay/coderocket-mcp help
+
+# 查看版本信息
+npx @yeepay/coderocket-mcp version
+```
+
+#### 全局安装（可选）
+
+如果需要全局安装：
 
 ```bash
 # 1. 全局安装CodeRocket MCP
@@ -56,8 +73,6 @@ npx -y @yeepay/coderocket-mcp test
 # 4. 启动服务器
 npx -y @yeepay/coderocket-mcp start
 ```
-
-> **注意**: CodeRocket MCP依赖于CodeRocket-CLI，请确保先安装CodeRocket-CLI。
 
 ### 开发者安装
 
@@ -79,6 +94,15 @@ npm start
 
 ## 🚀 快速开始
 
+### 新功能：自动Git变更审查
+
+使用新的 `review_changes` 工具，无需手动传递代码内容，自动检测并审查当前Git仓库中所有未提交的变更：
+
+```bash
+# 零参数调用，自动审查所有未提交变更
+npx @yeepay/coderocket-mcp review_changes
+```
+
 ### 1. 配置AI服务
 
 配置至少一个AI服务的API密钥：
@@ -86,9 +110,6 @@ npm start
 ```bash
 # 配置Gemini（推荐）
 export GEMINI_API_KEY="your_gemini_api_key"
-
-# 或配置OpenCode
-export OPENCODE_API_KEY="your_opencode_api_key"
 
 # 或配置ClaudeCode
 export CLAUDECODE_API_KEY="your_claudecode_api_key"
@@ -112,7 +133,7 @@ npx -y @yeepay/coderocket-mcp test
   "mcpServers": {
     "coderocket": {
       "command": "npx",
-      "args": ["-y", "@yeepay/coderocket-mcp", "start"],
+      "args": ["-y", "@yeepay/coderocket-mcp@latest"],
       "env": {
         "GEMINI_API_KEY": "your_gemini_api_key"
       }
@@ -130,7 +151,7 @@ npx -y @yeepay/coderocket-mcp test
   "mcp_servers": [
     {
       "name": "coderocket",
-      "command": ["coderocket-mcp", "start"],
+      "command": ["coderocket-mcp"],
       "environment": {
         "AI_SERVICE": "gemini",
         "GEMINI_API_KEY": "your_api_key"
@@ -176,7 +197,7 @@ CodeRocket MCP 提供以下工具：
 配置AI服务设置，包括服务选择、API密钥等。
 
 **参数：**
-- `service` (string): AI服务名称 (gemini/opencode/claudecode)
+- `service` (string): AI服务名称 (gemini/claudecode)
 - `scope` (string, 可选): 配置范围 (project/global)
 - `api_key` (string, 可选): API密钥
 - `timeout` (number, 可选): 超时时间
@@ -200,7 +221,6 @@ AI_MAX_RETRIES=3                     # 最大重试次数
 
 # API密钥
 GEMINI_API_KEY=your_gemini_key
-OPENCODE_API_KEY=your_opencode_key
 CLAUDECODE_API_KEY=your_claudecode_key
 
 # 日志配置
@@ -263,6 +283,43 @@ NODE_ENV=development                 # 开发模式启用详细日志
 }
 ```
 
+## 🎨 提示词自定义
+
+CodeRocket MCP 使用统一的提示词系统，所有代码审查功能都使用同一个提示词模板：
+
+### 统一提示词
+
+- **统一模板**：`git-commit-review-prompt.md` - 适用于所有代码审查场景
+- **功能覆盖**：Git 提交审查、代码片段审查、文件审查、变更审查
+
+### 提示词优先级
+
+1. **项目级提示词**（最高优先级）：`./prompts/git-commit-review-prompt.md`
+2. **全局提示词**：`~/.coderocket/prompts/git-commit-review-prompt.md`
+3. **内置默认提示词**（最低优先级）
+
+### 自定义示例
+
+创建项目级提示词：
+
+```bash
+mkdir -p prompts
+echo "# 自定义代码审查提示词..." > prompts/git-commit-review-prompt.md
+```
+
+创建全局提示词：
+
+```bash
+mkdir -p ~/.coderocket/prompts
+echo "# 全局代码审查提示词..." > ~/.coderocket/prompts/git-commit-review-prompt.md
+```
+
+### 统一性优势
+
+- **一致性**：所有审查功能使用相同的评判标准
+- **维护性**：只需维护一个提示词文件
+- **可预测性**：审查结果风格和格式保持一致
+
 ## 🔍 故障排除
 
 ### 常见问题
@@ -283,23 +340,29 @@ npm run build
 **问题 2**: AI服务不可用
 
 ```bash
-# 检查AI服务状态
-gemini --version
-opencode --version
-claudecode --version
+# 检查API密钥配置
+echo $GEMINI_API_KEY
+echo $CLAUDECODE_API_KEY
 
-# 重新配置AI服务
-gemini config
+# 检查配置文件
+cat ~/.coderocket/env
+cat .env
+
+# 使用get_ai_service_status工具检查服务状态
+npx @yeepay/coderocket-mcp test
 ```
 
-**问题 3**: CodeRocket-CLI路径错误
+**问题 3**: 配置文件权限问题
 
 ```bash
-# 设置环境变量指定路径
-export CODEROCKET_CLI_PATH=/path/to/coderocket-cli
+# 检查配置目录权限
+ls -la ~/.coderocket/
+chmod 700 ~/.coderocket/
+chmod 600 ~/.coderocket/env
 
-# 或在项目中创建符号链接
-ln -s /path/to/coderocket-cli ./coderocket-cli
+# 检查项目配置文件
+ls -la .env
+chmod 600 .env
 ```
 
 ### 调试模式
@@ -307,14 +370,16 @@ ln -s /path/to/coderocket-cli ./coderocket-cli
 启用详细日志：
 
 ```bash
-NODE_ENV=development npm start
+DEBUG=true NODE_ENV=development npx @yeepay/coderocket-mcp
 ```
 
-查看日志文件：
+查看详细错误信息：
 
 ```bash
-# 日志文件位置
-tail -f /tmp/coderocket-mcp.log
+# 启用调试模式
+export DEBUG=true
+export NODE_ENV=development
+npx @yeepay/coderocket-mcp
 ```
 
 ## 👨‍💻 开发指南
@@ -363,7 +428,7 @@ npm test
 
 ## 🤝 贡献
 
-我们欢迎社区贡献！请参考 [CodeRocket-CLI贡献指南](https://github.com/im47cn/coderocket-mcp/blob/main/CONTRIBUTING.md)。
+我们欢迎社区贡献！请参考 [CodeRocket-MCP贡献指南](https://github.com/im47cn/coderocket-mcp/blob/main/CONTRIBUTING.md)。
 
 ### 快速开始
 
@@ -379,21 +444,23 @@ npm test
 
 ## 🔗 相关链接
 
-- [CodeRocket-CLI](https://github.com/im47cn/coderocket-cli) - 核心CLI工具
 - [Model Context Protocol](https://modelcontextprotocol.io/) - MCP官方文档
-- [问题反馈](https://github.com/im47cn/coderocket-mcp/issues) - 报告问题或建议
+- [问题反馈](https://github.com/im47cn/coderocket/issues) - 报告问题或建议
+- [NPM包](https://www.npmjs.com/package/@yeepay/coderocket-mcp) - NPM官方页面
 
 ## 📊 特性对比
 
 | 功能 | CodeRocket-CLI | CodeRocket-MCP |
 |------|----------------|----------------|
-| Git Hooks集成 | ✅ | ❌ |
+| 独立运行 | ❌ (需要配置) | ✅ (开箱即用) |
 | MCP协议支持 | ❌ | ✅ |
 | 代码片段审查 | ❌ | ✅ |
 | AI工具集成 | ❌ | ✅ |
 | 多AI服务支持 | ✅ | ✅ |
+| Git Hooks集成 | ✅ | ❌ |
 | 自动MR创建 | ✅ | ❌ |
 | 详细审查报告 | ✅ | ✅ |
+| 环境变量配置 | ✅ | ✅ |
 
 ---
 

@@ -32,5 +32,6 @@ module.exports = {
     'node_modules/',
     '*.js',
     '*.d.ts',
+    'src/**/*.ts', // 跳过TypeScript文件，只检查JS文件
   ],
 };

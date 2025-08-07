@@ -2,6 +2,31 @@ import { writeFile, appendFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
+// 自定义错误类型
+export class AIServiceError extends Error {
+  public readonly service?: string;
+
+  constructor(message: string, service?: string) {
+    super(message);
+    this.name = 'AIServiceError';
+    this.service = service;
+  }
+}
+
+export class GitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GitError';
+  }
+}
+
+export class FileError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'FileError';
+  }
+}
+
 /**
  * 日志级别
  */
@@ -89,15 +114,21 @@ export class Logger {
       error,
     };
 
-    // 输出到控制台（根据日志级别选择合适的输出流）
-    const levelName = LogLevel[level];
-    const contextStr = context ? ` ${JSON.stringify(context)}` : '';
-    const errorStr = error ? ` Error: ${error.message}` : '';
+    // 在 MCP 服务器模式下，只有在 DEBUG 模式或 WARN/ERROR 级别时才输出到控制台
+    // 这避免了 IDE 误认为 INFO 级别的日志是错误信息
+    const shouldOutputToConsole =
+      process.env.DEBUG === 'true' || level >= LogLevel.WARN;
 
-    const logMethod = level >= LogLevel.WARN ? console.error : console.log;
-    logMethod(
-      `[${entry.timestamp}] ${levelName}: ${message}${contextStr}${errorStr}`,
-    );
+    if (shouldOutputToConsole) {
+      const levelName = LogLevel[level];
+      const contextStr = context ? ` ${JSON.stringify(context)}` : '';
+      const errorStr = error ? ` Error: ${error.message}` : '';
+
+      // 所有控制台输出都使用 stderr 以避免污染 MCP 协议的 stdout
+      console.error(
+        `[${entry.timestamp}] ${levelName}: ${message}${contextStr}${errorStr}`,
+      );
+    }
 
     // 写入日志文件
     if (this.logFile) {
@@ -207,18 +238,15 @@ export class ErrorHandler {
     let errorCode = 'UNKNOWN_ERROR';
     let userSuggestions = suggestions || [];
 
-    if (error.message.includes('Shell command failed')) {
-      errorCode = 'SHELL_COMMAND_ERROR';
+    if (error instanceof GitError) {
+      errorCode = 'GIT_ERROR';
       userSuggestions = [
-        '检查coderocket-cli是否正确安装',
-        '验证AI服务是否已配置',
-        '确保有足够的权限执行命令',
+        '确保在Git仓库中执行',
+        '检查Git仓库状态',
+        '验证提交哈希是否存在',
         ...userSuggestions,
       ];
-    } else if (
-      error.message.includes('AI服务') ||
-      error.message.includes('AI service')
-    ) {
+    } else if (error instanceof AIServiceError) {
       errorCode = 'AI_SERVICE_ERROR';
       userSuggestions = [
         '检查AI服务配置',
@@ -227,10 +255,7 @@ export class ErrorHandler {
         '尝试切换到其他AI服务',
         ...userSuggestions,
       ];
-    } else if (
-      error.message.includes('文件') ||
-      error.message.includes('file')
-    ) {
+    } else if (error instanceof FileError) {
       errorCode = 'FILE_ERROR';
       userSuggestions = [
         '检查文件路径是否正确',
@@ -238,12 +263,12 @@ export class ErrorHandler {
         '验证文件权限',
         ...userSuggestions,
       ];
-    } else if (error.message.includes('Git') || error.message.includes('git')) {
-      errorCode = 'GIT_ERROR';
+    } else if (error.message.includes('Shell command failed')) {
+      errorCode = 'SHELL_COMMAND_ERROR';
       userSuggestions = [
-        '确保在Git仓库中执行',
-        '检查Git仓库状态',
-        '验证提交哈希是否存在',
+        '验证AI服务是否已配置',
+        '检查API密钥是否正确',
+        '确保有足够的权限执行命令',
         ...userSuggestions,
       ];
     }
