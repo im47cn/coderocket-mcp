@@ -19,18 +19,32 @@ export class SmartAIManager {
   private serviceStatus: Map<AIService, boolean> = new Map();
 
   constructor() {
-    this.initializeClients();
+    // 不在构造函数中初始化客户端，而是在需要时懒加载
+    // 这样可以确保 ConfigManager 已正确加载配置
   }
 
   /**
-   * 初始化AI客户端
+   * 初始化AI客户端（懒加载）
    */
   private initializeClients(): void {
-    // 初始化 Gemini 客户端
+    // 强制重新初始化 ConfigManager 以确保最新配置
+    ConfigManager.initialize(true).then(() => {
+      this.initializeGeminiClient();
+      this.initializeClaudeClient();
+    }).catch(error => {
+      logger.error('ConfigManager 重新初始化失败', error);
+    });
+  }
+
+  /**
+   * 初始化 Gemini 客户端
+   */
+  private initializeGeminiClient(): void {
     const geminiKey = ConfigManager.getAPIKey('gemini');
     if (geminiKey) {
       try {
         this.geminiClient = new GoogleGenerativeAI(geminiKey);
+        // 初始化时先标记为可用，实际可用性通过 testService 检测
         this.serviceStatus.set('gemini', true);
         logger.debug('Gemini 客户端初始化成功');
       } catch (error) {
@@ -38,10 +52,16 @@ export class SmartAIManager {
         this.serviceStatus.set('gemini', false);
       }
     } else {
+      // 没有 API 密钥时标记为不可用
       this.serviceStatus.set('gemini', false);
     }
+  }
 
-    // 初始化 Claude 客户端
+  /**
+   * 初始化 Claude 客户端
+   */
+  private initializeClaudeClient(): void {
+
     const claudeKey = ConfigManager.getAPIKey('claudecode');
     if (claudeKey) {
       try {
@@ -227,13 +247,26 @@ export class SmartAIManager {
    * 测试服务连接
    */
   async testService(service: AIService): Promise<boolean> {
+    // 首先检查服务是否已配置（有 API 密钥）
+    const apiKey = ConfigManager.getAPIKey(service);
+    if (!apiKey) {
+      this.serviceStatus.set(service, false);
+      logger.debug(`AI服务 ${service} 未配置 API 密钥`);
+      return false;
+    }
+
     try {
-      await this.callAIService(service, '测试连接，请回复"连接成功"');
+      // 使用简单的测试提示词，设置较短的超时时间
+      await this.callAIService(service, '测试');
       this.serviceStatus.set(service, true);
+      logger.debug(`AI服务 ${service} 连接测试成功`);
       return true;
     } catch (error) {
-      this.serviceStatus.set(service, false);
-      logger.warn(`AI服务 ${service} 连接测试失败`, { error: error instanceof Error ? error.message : String(error) });
+      // 连接失败时不修改状态，保持配置状态
+      // 这样用户仍然可以看到服务已配置，只是当前不可用
+      logger.warn(`AI服务 ${service} 连接测试失败，但服务已配置`, {
+        error: error instanceof Error ? error.message : String(error)
+      });
       return false;
     }
   }
@@ -243,7 +276,29 @@ export class SmartAIManager {
    */
   async refreshServiceStatus(): Promise<void> {
     const services: AIService[] = ['gemini', 'claudecode'];
-    await Promise.all(services.map(service => this.testService(service)));
+
+    // 首先重新初始化客户端以确保使用最新配置
+    this.initializeClients();
+
+    // 等待一小段时间让异步初始化完成
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // 基于配置状态初始化服务状态
+    services.forEach(service => {
+      const apiKey = ConfigManager.getAPIKey(service);
+      if (apiKey) {
+        // 有 API 密钥则标记为已配置（可能可用）
+        this.serviceStatus.set(service, true);
+      } else {
+        // 没有 API 密钥则标记为不可用
+        this.serviceStatus.set(service, false);
+      }
+    });
+
+    // 然后异步测试实际连接状态（不阻塞响应）
+    Promise.all(services.map(service => this.testService(service))).catch(error => {
+      logger.warn('服务状态测试过程中出现错误', { error: error instanceof Error ? error.message : String(error) });
+    });
   }
 
   /**

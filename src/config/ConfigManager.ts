@@ -20,8 +20,14 @@ export class ConfigManager {
   /**
    * 初始化配置系统
    */
-  static async initialize(): Promise<void> {
-    if (this.initialized) return;
+  static async initialize(force: boolean = false): Promise<void> {
+    if (this.initialized && !force) return;
+
+    // 如果强制重新初始化，重置状态
+    if (force) {
+      this.initialized = false;
+      this.config = {};
+    }
 
     // 加载默认配置
     this.loadDefaults();

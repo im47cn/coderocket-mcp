@@ -49,6 +49,13 @@ export class CodeRocketService {
     if (!ConfigManager.isInitialized()) {
       throw new Error('ConfigManager 未初始化，请先调用 ConfigManager.initialize()');
     }
+
+    // 强制重新初始化配置以确保最新配置被加载
+    ConfigManager.initialize(true).then(() => {
+      logger.debug('CodeRocketService: ConfigManager 强制重新初始化完成');
+    }).catch(error => {
+      logger.error('CodeRocketService: ConfigManager 强制重新初始化失败', error);
+    });
   }
 
   /**
@@ -760,7 +767,7 @@ ${changes.statusOutput}
     logger.info('开始获取AI服务状态');
 
     try {
-      // 刷新服务状态
+      // 刷新服务状态（异步，不阻塞响应）
       await this.aiManager.refreshServiceStatus();
 
       // 获取服务状态
@@ -768,12 +775,62 @@ ${changes.statusOutput}
       const availableServices = this.aiManager.getAvailableServices();
 
       // 构建详细状态信息
-      const services = Object.entries(serviceStatus).map(([service, available]) => {
-        const apiKey = ConfigManager.getAPIKey(service as AIService);
+      const allServices: AIService[] = ['gemini', 'claudecode'];
+      const services = allServices.map(service => {
+        // 多重检查 API 密钥配置
+        let apiKey = '';
+        const envVar = ConfigManager.getAPIKeyEnvVar(service);
+
+        // 1. 首先检查环境变量
+        apiKey = process.env[envVar] || '';
+
+        // 2. 如果环境变量没有，尝试从 ConfigManager 获取
+        if (!apiKey) {
+          apiKey = ConfigManager.getAPIKey(service);
+        }
+
+        // 3. 如果还是没有，尝试从全局配置文件直接读取
+        if (!apiKey) {
+          try {
+            const { readFileSync } = require('fs');
+            const { join } = require('path');
+            const { homedir } = require('os');
+            const globalConfigPath = join(homedir(), '.coderocket', 'env');
+            const content = readFileSync(globalConfigPath, 'utf-8');
+            const lines = content.split('\n');
+            for (const line of lines) {
+              const trimmedLine = line.trim();
+              if (trimmedLine.startsWith(`${envVar}=`)) {
+                apiKey = trimmedLine.split('=').slice(1).join('=').trim();
+                break;
+              }
+            }
+          } catch (error) {
+            // 忽略文件读取错误
+          }
+        }
+
+        const isConfigured = !!apiKey;
+        const isAvailable = serviceStatus[service] || false;
+
+        // 调试信息
+        const debugInfo = {
+          service,
+          apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT SET',
+          isConfigured,
+          isAvailable,
+          envVar: ConfigManager.getAPIKeyEnvVar(service),
+          processEnv: process.env[ConfigManager.getAPIKeyEnvVar(service)] ? 'SET' : 'NOT SET',
+          configManagerResult: ConfigManager.getAPIKey(service) ? 'SET' : 'NOT SET'
+        };
+
+        console.error(`[DEBUG] 服务 ${service} 状态检查:`, JSON.stringify(debugInfo, null, 2));
+        logger.debug(`服务 ${service} 状态检查`, debugInfo);
+
         return {
-          service: service as AIService,
-          available,
-          configured: !!apiKey,
+          service,
+          available: isConfigured && isAvailable, // 只有配置且可用才标记为 available
+          configured: isConfigured,
         };
       });
 
@@ -784,17 +841,30 @@ ${changes.statusOutput}
       };
 
       logger.info('AI服务状态获取完成', {
-        availableCount: availableServices.length,
+        configuredCount: services.filter(s => s.configured).length,
+        availableCount: services.filter(s => s.available).length,
         totalCount: services.length,
       });
 
       return response;
     } catch (error) {
       logger.error('获取AI服务状态失败', error instanceof Error ? error : new Error(String(error)));
+
+      // 即使出错也尝试返回基本的配置状态
+      const allServices: AIService[] = ['gemini', 'claudecode'];
+      const fallbackServices = allServices.map(service => {
+        const apiKey = ConfigManager.getAPIKey(service);
+        return {
+          service,
+          available: false, // 出错时标记为不可用
+          configured: !!apiKey,
+        };
+      });
+
       return {
-        services: [],
-        current_service: 'gemini',
-        auto_switch_enabled: false,
+        services: fallbackServices,
+        current_service: ConfigManager.getAIService(),
+        auto_switch_enabled: ConfigManager.isAutoSwitchEnabled(),
       };
     }
   }
