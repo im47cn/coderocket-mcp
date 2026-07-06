@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/im47cn-coderocket-mcp-badge.png)](https://mseep.ai/app/im47cn-coderocket-mcp)
+
 # CodeRocket MCP
 
 <div align="center">
